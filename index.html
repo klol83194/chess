@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GIRI CHESS: PERSISTENT ID</title>
+    <title>GIRI CHESS: FIX CONNECTION</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
@@ -12,29 +12,21 @@
         #top-bar { background: #1a1a1a; padding: 10px; border-bottom: 3px solid var(--gold); display: flex; justify-content: space-around; align-items: center; }
         .p-info { display: flex; align-items: center; gap: 8px; text-align: left; }
         .ava-box { width: 45px; height: 45px; border-radius: 50%; background: #222; border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 22px; }
-        
-        #board-frame { width: 92vw; height: 92vw; max-width: 380px; max-height: 380px; margin: 15px auto; border: 3px solid #333; position: relative; }
+        #board-frame { width: 92vw; height: 92vw; max-width: 380px; max-height: 380px; margin: 15px auto; border: 3px solid #333; }
         #board { display: grid; grid-template-columns: repeat(8, 1fr); width: 100%; height: 100%; }
         .cell { display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; }
-        
         .t-def .w { background: #eeeed2; } .t-def .b { background: #769656; }
         .t-purple .w { background: #2d004d; } .t-purple .b { background: #1a0029; }
         .t-blood .w { background: #4a0000; } .t-blood .b { background: #1a0000; }
-        
         .selected { outline: 3px solid var(--gold) inset; background: rgba(255,215,0,0.4) !important; }
-        .btn { background: var(--gold); color: #000; border: none; padding: 10px 15px; font-weight: bold; border-radius: 6px; cursor: pointer; }
-        
+        .btn { background: var(--gold); color: #000; border: none; padding: 10px 15px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .btn:active { transform: scale(0.95); opacity: 0.8; }
         #status-dot { width: 10px; height: 10px; background: #555; border-radius: 50%; display: inline-block; margin-right: 5px; }
-        #status-dot.online { background: var(--green); box-shadow: 0 0 5px var(--green); }
-
-        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 380px; background: #151515; border: 2px solid var(--gold); padding: 20px; z-index: 200; border-radius: 12px; max-height: 85vh; overflow-y: auto; }
+        #status-dot.online { background: var(--green); box-shadow: 0 0 8px var(--green); }
+        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 380px; background: #151515; border: 2px solid var(--gold); padding: 20px; z-index: 200; border-radius: 12px; }
         #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 150; }
-        
-        input { background: #000; color: #fff; border: 1px solid #444; padding: 10px; width: 100%; box-sizing: border-box; margin-bottom: 10px; border-radius: 5px;}
-        #my-id-box { background: #222; padding: 8px; border-radius: 5px; font-family: monospace; font-size: 10px; word-break: break-all; margin-top: 5px; border: 1px dashed var(--gold); cursor: pointer; }
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 15px; }
-        .grid-item { background: #222; padding: 10px; border-radius: 5px; border: 1px solid #444; font-size: 20px; }
-        .grid-item.active { border-color: var(--gold); background: #2a2a10; }
+        input { background: #000; color: #fff; border: 1px solid #444; padding: 12px; width: 100%; box-sizing: border-box; margin-bottom: 10px; border-radius: 5px; font-size: 14px; }
+        #my-id-box { background: #111; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 11px; word-break: break-all; margin-top: 5px; border: 1px dashed #444; cursor: pointer; color: var(--gold); }
     </style>
 </head>
 <body class="t-def" id="app">
@@ -42,27 +34,22 @@
 <div id="top-bar">
     <div class="p-info">
         <div class="ava-box" id="display-ava">👤</div>
-        <div>
-            <b id="display-coins" style="color:var(--gold)">0</b> 🪙<br>
-            <small>🏆 <span id="display-elo">1200</span></small>
-        </div>
+        <div><b id="display-coins">0</b> 🪙<br><small>🏆 <span id="display-elo">1200</span></small></div>
     </div>
-    <div><div id="status-dot"></div><small id="status-text">ОФФЛАЙН</small></div>
+    <div><div id="status-dot"></div><small id="status-text">ПОИСК СЕТИ...</small></div>
     <button class="btn" onclick="openModal()">МЕНЮ</button>
 </div>
 
 <div id="board-frame"><div id="board"></div></div>
 
 <div style="padding: 10px;">
-    <div>
-        <button class="btn" style="background:#4caf50" onclick="startBot(1)">НУБ</button>
-        <button class="btn" style="background:#ff9800" onclick="startBot(2)">PRO</button>
-        <button class="btn" style="background:#f44336" onclick="startBot(3)">GIRI</button>
+    <div style="display:flex; gap:5px; margin-bottom:10px;">
+        <button class="btn" style="flex:1; background:#4caf50" onclick="startBot(1)">БОТ 1</button>
+        <button class="btn" style="flex:1; background:#f44336" onclick="startBot(3)">БОТ 3</button>
     </div>
-    <hr style="border:0; border-top:1px solid #333; margin: 10px 0;">
     <input type="text" id="opp-id" placeholder="Вставь ID друга">
-    <button class="btn" style="width:100%" onclick="connectPvP()">ИГРАТЬ PVP</button>
-    <div id="my-id-box" onclick="copyId()">ID: <span id="my-id">...</span></div>
+    <button class="btn" style="width:100%; margin-bottom:10px;" onclick="connectPvP()">ПОДКЛЮЧИТЬСЯ (PVP)</button>
+    <div id="my-id-box" onclick="copyId()">Твой ID (нажми): <span id="my-id">...</span></div>
 </div>
 
 <div id="overlay" onclick="closeModal()"></div>
@@ -75,74 +62,60 @@
     <div id="sec-shop" style="display:none"><div class="grid" id="shop-avas"></div><div id="shop-items"></div></div>
     <hr style="border:0; border-top:1px solid #333; margin: 15px 0;">
     <input type="text" id="promo-in" placeholder="ПРОМОКОД">
-    <button class="btn" style="width:100%" onclick="usePromo()">АКТИВИРОВАТЬ</button>
+    <button class="btn" style="width:100%" onclick="usePromo()">OK</button>
 </div>
 
 <script>
     const AVATARS = { '👤':0, '🐱':100, '👺':300, '🥷':500, '🤡':1000 };
-    const SHOP = {
-        't-purple': { n: 'Неон', p: 500, type: 't' },
-        't-blood': { n: 'Кровь', p: 800, type: 't' },
-        's-giri': { n: 'Гири', p: 1000, type: 's' }
-    };
-
-    let coins = parseInt(localStorage.getItem('g_c')) || 100;
-    let elo = parseInt(localStorage.getItem('g_elo')) || 1200;
-    let unlocked = JSON.parse(localStorage.getItem('g_u')) || ['👤', 't-def', 's-def'];
-    let curAva = localStorage.getItem('g_a') || '👤';
-    let curTheme = localStorage.getItem('g_t') || 't-def';
-    let curSkin = localStorage.getItem('g_s') || 's-def';
+    const SHOP = { 't-purple':{n:'Неон',p:500,type:'t'}, 't-blood':{n:'Кровь',p:800,type:'t'}, 's-giri':{n:'Гири',p:1000,type:'s'} };
     
-    // ПЕРМАНЕНТНЫЙ ID: берем старый или создаем новый
-    let savedId = localStorage.getItem('g_peer_id');
-    const peer = new Peer(savedId, { 
-        host: '0.peerjs.com', port: 443, secure: true, 
-        config: { 'iceServers': [{ 'urls': 'stun:stun.l.google.com:19302' }] } 
-    });
+    let coins = parseInt(localStorage.getItem('g_c')) || 100, elo = parseInt(localStorage.getItem('g_elo')) || 1200;
+    let unlocked = JSON.parse(localStorage.getItem('g_u')) || ['👤', 't-def', 's-def'], curAva = localStorage.getItem('g_a') || '👤';
+    let curTheme = localStorage.getItem('g_t') || 't-def', curSkin = localStorage.getItem('g_s') || 's-def';
 
     const game = new Chess();
     let conn, myColor = 'w', lastSq = null, botLvl = 0;
 
-    peer.on('open', id => {
-        localStorage.setItem('g_peer_id', id);
-        document.getElementById('my-id').innerText = id;
+    const savedId = localStorage.getItem('g_peer_id');
+    const peer = new Peer(savedId, { 
+        host: '0.peerjs.com', port: 443, secure: true,
+        config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] } 
     });
 
+    peer.on('open', id => { 
+        localStorage.setItem('g_peer_id', id); 
+        document.getElementById('my-id').innerText = id;
+        document.getElementById('status-text').innerText = 'ГОТОВ';
+    });
+
+    // Когда К НАМ подключаются
     peer.on('connection', c => {
         conn = c; myColor = 'w'; botLvl = 0;
-        initConn();
-        alert("Игрок подключился! Ваш ход (Белые).");
+        bindEvents();
+        alert("Игрок вошел! Твой ход.");
     });
 
     function connectPvP() {
-        const targetId = document.getElementById('opp-id').value.trim();
-        if(!targetId) return alert("Нужен ID!");
-        conn = peer.connect(targetId, { reliable: true });
+        const tid = document.getElementById('opp-id').value.trim();
+        if(!tid) return alert("Введите ID!");
+        conn = peer.connect(tid, { reliable: true });
         myColor = 'b'; botLvl = 0;
-        conn.on('open', () => {
-            initConn();
-            alert("Связь установлена! Ждем хода белых.");
-        });
+        bindEvents();
     }
 
-    function initConn() {
-        document.getElementById('status-dot').className = 'online';
-        document.getElementById('status-text').innerText = 'В СЕТИ';
-        conn.on('data', data => {
-            if(data.m) {
-                game.move(data.m);
-                render();
-                checkEnd();
-            }
+    function bindEvents() {
+        conn.on('open', () => {
+            document.getElementById('status-dot').className = 'online';
+            document.getElementById('status-text').innerText = 'В СЕТИ';
+            if(myColor === 'b') alert("Подключено! Ожидай ход белых.");
+        });
+        conn.on('data', d => {
+            if(d.m) { game.move(d.m); render(); checkEnd(); }
         });
         conn.on('close', () => {
             document.getElementById('status-dot').className = '';
-            document.getElementById('status-text').innerText = 'РАЗРЫВ';
+            document.getElementById('status-text').innerText = 'ОФФЛАЙН';
         });
-    }
-
-    function startBot(lvl) {
-        botLvl = lvl; myColor = 'w'; game.reset(); render();
     }
 
     function render() {
@@ -167,7 +140,7 @@
                         if(m) {
                             if(conn && conn.open) conn.send({m: m.san});
                             lastSq = null; render(); checkEnd();
-                            if(botLvl > 0) setTimeout(botLogic, 600);
+                            if(botLvl > 0) setTimeout(botDo, 600);
                         } else lastSq = sq;
                     } else lastSq = sq;
                     render();
@@ -177,53 +150,34 @@
         });
     }
 
-    function botLogic() {
-        const moves = game.moves();
-        if(!moves.length) return;
-        let m = botLvl === 1 ? moves[Math.floor(Math.random()*moves.length)] : 
-                moves.sort((a,b)=>(b.includes('x')?1:-1))[0]; 
-        game.move(m); render(); checkEnd();
+    function botDo() {
+        const m = game.moves(); if(!m.length) return;
+        game.move(botLvl===1 ? m[Math.floor(Math.random()*m.length)] : m.sort((a,b)=>b.includes('x')?1:-1)[0]);
+        render(); checkEnd();
     }
 
     function checkEnd() {
         if(game.game_over()) {
-            let win = game.in_draw() ? 0.5 : (game.turn() !== myColor ? 1 : 0);
-            let diff = Math.round(30 * (win - 0.5));
-            elo += diff; if(win===1) coins += 50;
-            alert("Игра окончена! Рейтинг: " + elo);
-            sync();
+            let res = game.in_draw() ? 0.5 : (game.turn() !== myColor ? 1 : 0);
+            elo += Math.round(30 * (res - 0.5)); if(res===1) coins += 50;
+            alert("Конец! ЭЛО: " + elo); sync();
         }
     }
 
+    function startBot(l) { botLvl=l; myColor='w'; game.reset(); render(); }
     function copyId() { navigator.clipboard.writeText(document.getElementById('my-id').innerText); alert("ID скопирован!"); }
+    function setTab(t) { document.getElementById('sec-inv').style.display = t==='inv'?'block':'none'; document.getElementById('sec-shop').style.display = t==='shop'?'block':'none'; }
     function sync() {
         document.getElementById('display-coins').innerText = coins;
         document.getElementById('display-elo').innerText = elo;
         document.getElementById('display-ava').innerText = curAva;
-        // Отрисовка магазина и инвентаря
-        const iA = document.getElementById('inv-avas'), sA = document.getElementById('shop-avas');
-        iA.innerHTML = ''; sA.innerHTML = '';
-        for(let a in AVATARS) {
-            if(unlocked.includes(a)) iA.innerHTML += `<div class="grid-item ${curAva===a?'active':''}" onclick="curAva='${a}';sync()">${a}</div>`;
-            else sA.innerHTML += `<div class="grid-item" onclick="if(coins>=${AVATARS[a]}){coins-=${AVATARS[a]};unlocked.push('${a}');sync()}">${a}<br><small>${AVATARS[a]}</small></div>`;
-        }
         localStorage.setItem('g_c', coins); localStorage.setItem('g_elo', elo);
         localStorage.setItem('g_u', JSON.stringify(unlocked)); localStorage.setItem('g_a', curAva);
         localStorage.setItem('g_t', curTheme); localStorage.setItem('g_s', curSkin);
     }
-
-    function setTab(t) {
-        document.getElementById('sec-inv').style.display = t==='inv'?'block':'none';
-        document.getElementById('sec-shop').style.display = t==='shop'?'block':'none';
-    }
-    function usePromo() {
-        let v = document.getElementById('promo-in').value.toUpperCase();
-        if(v==='GIRI') coins += 1000; if(v==='TEST') coins += 5000;
-        document.getElementById('promo-in').value = ''; sync();
-    }
+    function usePromo() { let v = document.getElementById('promo-in').value.toUpperCase(); if(v==='GIRI') coins+=1000; sync(); document.getElementById('promo-in').value=''; }
     function openModal() { document.getElementById('modal').style.display='block'; document.getElementById('overlay').style.display='block'; sync(); }
     function closeModal() { document.getElementById('modal').style.display='none'; document.getElementById('overlay').style.display='none'; }
-    
     sync(); render();
 </script>
 </body>
