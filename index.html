@@ -3,27 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GIRI CHESS: FINAL FIX</title>
+    <title>GIRI CHESS: ELO EDITION</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root { --gold: #ffd700; --bg: #0d0d0d; }
         body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; text-align: center; }
         #top-bar { background: #1a1a1a; padding: 10px; border-bottom: 3px solid var(--gold); display: flex; justify-content: space-around; align-items: center; }
-        .p-info { display: flex; align-items: center; gap: 8px; }
+        .p-info { display: flex; align-items: center; gap: 8px; text-align: left; }
         .ava-box { width: 45px; height: 45px; border-radius: 50%; background: #222; border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 22px; }
         
-        #board-frame { width: 92vw; height: 92vw; max-width: 380px; max-height: 380px; margin: 15px auto; border: 3px solid #333; }
+        #board-frame { width: 92vw; height: 92vw; max-width: 380px; max-height: 380px; margin: 15px auto; border: 3px solid #333; position: relative; }
         #board { display: grid; grid-template-columns: repeat(8, 1fr); width: 100%; height: 100%; }
-        .cell { display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; }
+        .cell { display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; transition: 0.2s; }
         
         /* ТЕМЫ */
         .t-def .w { background: #eeeed2; } .t-def .b { background: #769656; }
         .t-purple .w { background: #2d004d; } .t-purple .b { background: #1a0029; }
         .t-blood .w { background: #4a0000; } .t-blood .b { background: #1a0000; }
         
-        .selected { outline: 3px solid var(--gold) inset; background: rgba(255,215,0,0.3) !important; }
+        .selected { outline: 3px solid var(--gold) inset; background: rgba(255,215,0,0.4) !important; }
         .btn { background: var(--gold); color: #000; border: none; padding: 10px 15px; font-weight: bold; border-radius: 6px; cursor: pointer; }
+        .btn-bot { padding: 8px 12px; font-size: 12px; margin: 2px; }
         
         #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 380px; background: #151515; border: 2px solid var(--gold); padding: 20px; z-index: 200; border-radius: 12px; max-height: 85vh; overflow-y: auto; }
         #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 150; }
@@ -45,17 +46,28 @@
 <div id="top-bar">
     <div class="p-info">
         <div class="ava-box" id="display-ava">👤</div>
-        <b id="display-coins" style="color:var(--gold)">0</b> 🪙
+        <div>
+            <b id="display-coins" style="color:var(--gold)">0</b> 🪙<br>
+            <small>🏆 <span id="display-elo">1200</span></small>
+        </div>
     </div>
+    <div style="font-size: 12px; opacity: 0.7;">GIRI CHESS</div>
     <button class="btn" onclick="openModal()">МЕНЮ</button>
 </div>
 
 <div id="board-frame"><div id="board"></div></div>
 
 <div style="padding: 10px;">
-    <input type="text" id="opp-id" placeholder="Введи ID друга" style="width: 70%; display: inline-block;">
-    <button class="btn" onclick="connect()">ИГРАТЬ</button>
-    <p>Твой ID: <b id="my-id" style="color:var(--gold)">...</b></p>
+    <div style="margin-bottom: 10px;">
+        <small>ИГРАТЬ С БОТОМ:</small><br>
+        <button class="btn btn-bot" style="background:#4caf50" onclick="startBot(1)">НУБ</button>
+        <button class="btn btn-bot" style="background:#ff9800" onclick="startBot(2)">PRO</button>
+        <button class="btn btn-bot" style="background:#f44336" onclick="startBot(3)">GIRI</button>
+    </div>
+    <hr style="border:0; border-top:1px solid #333; margin: 10px 0;">
+    <input type="text" id="opp-id" placeholder="Введи ID друга" style="width: 60%; display: inline-block;">
+    <button class="btn" onclick="connect()">PVP</button>
+    <p style="margin: 5px 0;"><small>Твой ID: <b id="my-id" style="color:var(--gold)">...</b></small></p>
 </div>
 
 <div id="overlay" onclick="closeModal()"></div>
@@ -64,17 +76,14 @@
         <button id="t-inv" class="tab-btn active" onclick="setTab('inv')">СКЛАД</button>
         <button id="t-shop" class="tab-btn" onclick="setTab('shop')">МАГАЗИН</button>
     </div>
-
     <div id="sec-inv">
         <div class="grid" id="inv-avas"></div>
         <div id="inv-items"></div>
     </div>
-
     <div id="sec-shop" style="display:none">
         <div class="grid" id="shop-avas"></div>
         <div id="shop-items"></div>
     </div>
-
     <hr style="border:0; border-top:1px solid #333; margin: 15px 0;">
     <input type="text" id="promo-in" placeholder="ПРОМОКОД">
     <button class="btn" style="width:100%" onclick="usePromo()">АКТИВИРОВАТЬ</button>
@@ -87,29 +96,73 @@
         't-blood': { n: 'Тема: Кровь', p: 800, type: 't' },
         's-giri': { n: 'Скин: Гири 🪨', p: 1000, type: 's' }
     };
+    const PIECE_VALS = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900 };
 
     let coins = parseInt(localStorage.getItem('g_c')) || 100;
+    let elo = parseInt(localStorage.getItem('g_elo')) || 1200;
     let unlocked = JSON.parse(localStorage.getItem('g_u')) || ['👤', 't-def', 's-def'];
     let curAva = localStorage.getItem('g_a') || '👤';
     let curTheme = localStorage.getItem('g_t') || 't-def';
     let curSkin = localStorage.getItem('g_s') || 's-def';
 
     const game = new Chess();
-    let conn, myColor = 'w', lastSq = null;
+    let conn, myColor = 'w', lastSq = null, botLvl = 0;
 
-    const peer = new Peer();
+    // Настройка PeerJS для HTTPS
+    const peer = new Peer(undefined, { host: '0.peerjs.com', port: 443, secure: true });
     peer.on('open', id => { document.getElementById('my-id').innerText = id.slice(0,5).toUpperCase(); });
-    peer.on('connection', c => { conn = c; myColor = 'w'; alert("Бой начался!"); setup(); });
+    peer.on('connection', c => { 
+        conn = c; myColor = 'w'; botLvl = 0; 
+        alert("Игрок подключился! Твой ход."); setupComm(); 
+    });
 
     function connect() {
         const id = document.getElementById('opp-id').value.toLowerCase();
+        if(!id) return;
         conn = peer.connect(id);
-        myColor = 'b';
-        conn.on('open', () => { alert("Подключено!"); setup(); });
+        myColor = 'b'; botLvl = 0;
+        conn.on('open', () => { alert("Подключено! Ход белых."); setupComm(); });
     }
 
-    function setup() {
-        conn.on('data', d => { if(d.m) { game.move(d.m); render(); } });
+    function setupComm() {
+        conn.on('data', d => { if(d.m) { game.move(d.m); render(); checkEnd(); } });
+    }
+
+    // БОТЫ
+    function startBot(lvl) {
+        botLvl = lvl; myColor = 'w'; game.reset(); render();
+    }
+
+    function botMove() {
+        if(game.game_over()) return;
+        const moves = game.moves();
+        let move;
+        if(botLvl === 1) move = moves[Math.floor(Math.random()*moves.length)];
+        else if(botLvl === 2) move = moves.sort((a,b) => (b.includes('x')?1:-1) - (a.includes('x')?1:-1))[0];
+        else {
+            let bestS = -999, bestM = moves[0];
+            moves.forEach(m => {
+                game.move(m);
+                let s = 0;
+                game.board().forEach(r => r.forEach(p => { if(p) s += (p.color==='b'?PIECE_VALS[p.type]:-PIECE_VALS[p.type]); }));
+                if(s > bestS) { bestS = s; bestM = m; }
+                game.undo();
+            });
+            move = bestM;
+        }
+        game.move(move); render(); checkEnd();
+    }
+
+    function checkEnd() {
+        if(game.game_over()) {
+            let res = game.in_draw() ? 0.5 : (game.turn() !== myColor ? 1 : 0);
+            let K = 30, exp = 1/(1+Math.pow(10, (1200-elo)/400));
+            let diff = Math.round(K * (res - exp));
+            elo += diff;
+            if(res === 1) coins += (botLvl * 50) + 10;
+            alert(`Конец! Результ: ${res===1?'Победа':res===0?'Поражение':'Ничья'}. Рейтинг: ${elo} (${diff>0?'+':''}${diff})`);
+            sync();
+        }
     }
 
     function render() {
@@ -128,13 +181,15 @@
                     cell.appendChild(pc);
                 }
                 cell.onclick = () => {
-                    if(game.turn() !== myColor) return;
+                    if(game.turn() !== myColor || game.game_over()) return;
                     if(lastSq) {
                         const m = game.move({from: lastSq, to: sq, promotion: 'q'});
-                        if(m) { if(conn) conn.send({m: m.san}); lastSq = null; }
-                        else { lastSq = sq; }
-                    } else { lastSq = sq; }
-                    render();
+                        if(m) { 
+                            if(conn) conn.send({m: m.san}); 
+                            lastSq = null; render(); checkEnd();
+                            if(botLvl > 0) setTimeout(botMove, 600);
+                        } else { lastSq = sq; render(); }
+                    } else { lastSq = sq; render(); }
                 };
                 b.appendChild(cell);
             });
@@ -144,14 +199,13 @@
     function sync() {
         document.getElementById('display-coins').innerText = coins;
         document.getElementById('display-ava').innerText = curAva;
-        
+        document.getElementById('display-elo').innerText = elo;
         const iA = document.getElementById('inv-avas'), sA = document.getElementById('shop-avas');
         iA.innerHTML = ''; sA.innerHTML = '';
         for(let a in AVATARS) {
             if(unlocked.includes(a)) iA.innerHTML += `<div class="grid-item ${curAva===a?'active':''}" onclick="setA('${a}')">${a}</div>`;
             else sA.innerHTML += `<div class="grid-item" onclick="buyA('${a}')">${a}<br><small>${AVATARS[a]}</small></div>`;
         }
-
         const iI = document.getElementById('inv-items'), sI = document.getElementById('shop-items');
         iI.innerHTML = ''; sI.innerHTML = '';
         for(let id in SHOP) {
@@ -159,7 +213,8 @@
             else sI.innerHTML += `<div class="item-row">${SHOP[id].n} <button class="btn" onclick="buy('${id}')">${SHOP[id].p}🪙</button></div>`;
         }
         localStorage.setItem('g_c', coins); localStorage.setItem('g_u', JSON.stringify(unlocked));
-        localStorage.setItem('g_a', curAva); localStorage.setItem('g_t', curTheme); localStorage.setItem('g_s', curSkin);
+        localStorage.setItem('g_a', curAva); localStorage.setItem('g_t', curTheme); 
+        localStorage.setItem('g_s', curSkin); localStorage.setItem('g_elo', elo);
         render();
     }
 
@@ -173,14 +228,12 @@
         if(v === 'TEST') coins += 5000;
         document.getElementById('promo-in').value = ''; sync();
     }
-
     function setTab(t) {
         document.getElementById('sec-inv').style.display = t==='inv'?'block':'none';
         document.getElementById('sec-shop').style.display = t==='shop'?'block':'none';
         document.getElementById('t-inv').className = 'tab-btn '+(t==='inv'?'active':'');
         document.getElementById('t-shop').className = 'tab-btn '+(t==='shop'?'active':'');
     }
-
     function openModal() { document.getElementById('modal').style.display='block'; document.getElementById('overlay').style.display='block'; sync(); }
     function closeModal() { document.getElementById('modal').style.display='none'; document.getElementById('overlay').style.display='none'; }
 
