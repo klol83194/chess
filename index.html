@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GIRI CHESS: ELO EDITION</title>
+    <title>GIRI CHESS: FULL ID EDITION</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
@@ -17,28 +17,35 @@
         #board { display: grid; grid-template-columns: repeat(8, 1fr); width: 100%; height: 100%; }
         .cell { display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; transition: 0.2s; }
         
-        /* ТЕМЫ */
         .t-def .w { background: #eeeed2; } .t-def .b { background: #769656; }
         .t-purple .w { background: #2d004d; } .t-purple .b { background: #1a0029; }
         .t-blood .w { background: #4a0000; } .t-blood .b { background: #1a0000; }
         
         .selected { outline: 3px solid var(--gold) inset; background: rgba(255,215,0,0.4) !important; }
         .btn { background: var(--gold); color: #000; border: none; padding: 10px 15px; font-weight: bold; border-radius: 6px; cursor: pointer; }
-        .btn-bot { padding: 8px 12px; font-size: 12px; margin: 2px; }
         
         #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 380px; background: #151515; border: 2px solid var(--gold); padding: 20px; z-index: 200; border-radius: 12px; max-height: 85vh; overflow-y: auto; }
         #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 150; }
         
-        .tab-nav { display: flex; gap: 5px; margin-bottom: 15px; }
         .tab-btn { flex: 1; padding: 10px; background: #333; color: #fff; border: none; font-weight: bold; }
         .tab-btn.active { background: var(--gold); color: #000; }
-        
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 15px; }
         .grid-item { background: #222; padding: 10px; border-radius: 5px; border: 1px solid #444; font-size: 20px; }
         .grid-item.active { border-color: var(--gold); background: #2a2a10; }
+        .item-row { background: #222; margin: 8px 0; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 6px; }
+        input { background: #000; color: #fff; border: 1px solid #444; padding: 10px; width: 100%; box-sizing: border-box; margin-bottom: 10px; border-radius: 5px;}
         
-        .item-row { background: #222; margin: 8px 0; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 6px; font-size: 14px; }
-        input { background: #000; color: #fff; border: 1px solid #444; padding: 10px; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
+        #my-id-box { 
+            background: #222; 
+            padding: 8px; 
+            border-radius: 5px; 
+            font-family: monospace; 
+            font-size: 11px; 
+            word-break: break-all; 
+            margin-top: 5px; 
+            border: 1px dashed var(--gold);
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="t-def" id="app">
@@ -51,39 +58,32 @@
             <small>🏆 <span id="display-elo">1200</span></small>
         </div>
     </div>
-    <div style="font-size: 12px; opacity: 0.7;">GIRI CHESS</div>
     <button class="btn" onclick="openModal()">МЕНЮ</button>
 </div>
 
 <div id="board-frame"><div id="board"></div></div>
 
 <div style="padding: 10px;">
-    <div style="margin-bottom: 10px;">
-        <small>ИГРАТЬ С БОТОМ:</small><br>
-        <button class="btn btn-bot" style="background:#4caf50" onclick="startBot(1)">НУБ</button>
-        <button class="btn btn-bot" style="background:#ff9800" onclick="startBot(2)">PRO</button>
-        <button class="btn btn-bot" style="background:#f44336" onclick="startBot(3)">GIRI</button>
+    <div>
+        <small>БОТЫ:</small>
+        <button class="btn" style="padding:5px 10px; background:#4caf50" onclick="startBot(1)">1</button>
+        <button class="btn" style="padding:5px 10px; background:#ff9800" onclick="startBot(2)">2</button>
+        <button class="btn" style="padding:5px 10px; background:#f44336" onclick="startBot(3)">3</button>
     </div>
     <hr style="border:0; border-top:1px solid #333; margin: 10px 0;">
-    <input type="text" id="opp-id" placeholder="Введи ID друга" style="width: 60%; display: inline-block;">
-    <button class="btn" onclick="connect()">PVP</button>
-    <p style="margin: 5px 0;"><small>Твой ID: <b id="my-id" style="color:var(--gold)">...</b></small></p>
+    <input type="text" id="opp-id" placeholder="Вставь полный ID друга">
+    <button class="btn" style="width:100%" onclick="connect()">ИГРАТЬ PVP</button>
+    <div id="my-id-box" onclick="copyMyId()">Твой ID: <span id="my-id">ЗАГРУЗКА...</span> (нажми, чтобы скопировать)</div>
 </div>
 
 <div id="overlay" onclick="closeModal()"></div>
 <div id="modal">
-    <div class="tab-nav">
+    <div style="display:flex; gap:5px; margin-bottom:15px;">
         <button id="t-inv" class="tab-btn active" onclick="setTab('inv')">СКЛАД</button>
         <button id="t-shop" class="tab-btn" onclick="setTab('shop')">МАГАЗИН</button>
     </div>
-    <div id="sec-inv">
-        <div class="grid" id="inv-avas"></div>
-        <div id="inv-items"></div>
-    </div>
-    <div id="sec-shop" style="display:none">
-        <div class="grid" id="shop-avas"></div>
-        <div id="shop-items"></div>
-    </div>
+    <div id="sec-inv"><div class="grid" id="inv-avas"></div><div id="inv-items"></div></div>
+    <div id="sec-shop" style="display:none"><div class="grid" id="shop-avas"></div><div id="shop-items"></div></div>
     <hr style="border:0; border-top:1px solid #333; margin: 15px 0;">
     <input type="text" id="promo-in" placeholder="ПРОМОКОД">
     <button class="btn" style="width:100%" onclick="usePromo()">АКТИВИРОВАТЬ</button>
@@ -92,9 +92,9 @@
 <script>
     const AVATARS = { '👤':0, '🐱':100, '👺':300, '🥷':500, '🤡':1000 };
     const SHOP = {
-        't-purple': { n: 'Тема: Неон', p: 500, type: 't' },
-        't-blood': { n: 'Тема: Кровь', p: 800, type: 't' },
-        's-giri': { n: 'Скин: Гири 🪨', p: 1000, type: 's' }
+        't-purple': { n: 'Неон', p: 500, type: 't' },
+        't-blood': { n: 'Кровь', p: 800, type: 't' },
+        's-giri': { n: 'Скин: Гири', p: 1000, type: 's' }
     };
     const PIECE_VALS = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900 };
 
@@ -108,24 +108,35 @@
     const game = new Chess();
     let conn, myColor = 'w', lastSq = null, botLvl = 0;
 
-    // Настройка PeerJS для HTTPS
+    // Инициализация PeerJS с полным ID
     const peer = new Peer(undefined, { host: '0.peerjs.com', port: 443, secure: true });
-    peer.on('open', id => { document.getElementById('my-id').innerText = id.slice(0,5).toUpperCase(); });
+
+    peer.on('open', id => { 
+        document.getElementById('my-id').innerText = id; 
+    });
+
     peer.on('connection', c => { 
         conn = c; myColor = 'w'; botLvl = 0; 
-        alert("Игрок подключился! Твой ход."); setupComm(); 
+        alert("Противник подключился! Твой ход.");
+        conn.on('open', setupComm);
     });
 
     function connect() {
-        const id = document.getElementById('opp-id').value.toLowerCase();
-        if(!id) return;
+        const id = document.getElementById('opp-id').value.trim();
+        if(!id) return alert("Вставь ID!");
         conn = peer.connect(id);
         myColor = 'b'; botLvl = 0;
-        conn.on('open', () => { alert("Подключено! Ход белых."); setupComm(); });
+        conn.on('open', () => { alert("Подключено! Ожидай ход белых."); setupComm(); });
     }
 
     function setupComm() {
         conn.on('data', d => { if(d.m) { game.move(d.m); render(); checkEnd(); } });
+    }
+
+    function copyMyId() {
+        const id = document.getElementById('my-id').innerText;
+        navigator.clipboard.writeText(id);
+        alert("ID скопирован!");
     }
 
     // БОТЫ
@@ -160,7 +171,7 @@
             let diff = Math.round(K * (res - exp));
             elo += diff;
             if(res === 1) coins += (botLvl * 50) + 10;
-            alert(`Конец! Результ: ${res===1?'Победа':res===0?'Поражение':'Ничья'}. Рейтинг: ${elo} (${diff>0?'+':''}${diff})`);
+            alert(`Конец! Рейтинг: ${elo} (${diff>0?'+':''}${diff})`);
             sync();
         }
     }
@@ -231,8 +242,6 @@
     function setTab(t) {
         document.getElementById('sec-inv').style.display = t==='inv'?'block':'none';
         document.getElementById('sec-shop').style.display = t==='shop'?'block':'none';
-        document.getElementById('t-inv').className = 'tab-btn '+(t==='inv'?'active':'');
-        document.getElementById('t-shop').className = 'tab-btn '+(t==='shop'?'active':'');
     }
     function openModal() { document.getElementById('modal').style.display='block'; document.getElementById('overlay').style.display='block'; sync(); }
     function closeModal() { document.getElementById('modal').style.display='none'; document.getElementById('overlay').style.display='none'; }
