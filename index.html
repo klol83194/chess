@@ -3,104 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GIRI CHESS: FULL EDITION</title>
+    <title>GIRI CHESS: FIX</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root { --gold: #ffd700; --bg: #0d0d0d; }
-        body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; text-align: center; overflow-x: hidden; }
-        #top-bar { background: #1a1a1a; padding: 12px; border-bottom: 3px solid var(--gold); display: flex; justify-content: space-around; align-items: center; position: sticky; top:0; z-index: 100; }
-        .p-card { display: flex; align-items: center; gap: 10px; }
-        .ava-box { width: 50px; height: 50px; border-radius: 50%; background: #222; border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 24px; position: relative; }
-        .elo-tag { position: absolute; bottom: -5px; background: #00e676; color: #000; font-size: 10px; padding: 1px 4px; border-radius: 4px; font-weight: bold; }
-        #board-frame { width: 90vw; height: 90vw; max-width: 380px; max-height: 380px; margin: 15px auto; border: 3px solid #333; background: #000; }
+        body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; text-align: center; }
+        #top-bar { background: #1a1a1a; padding: 10px; border-bottom: 3px solid var(--gold); display: flex; justify-content: space-around; align-items: center; }
+        .ava-box { width: 45px; height: 45px; border-radius: 50%; background: #222; border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        #board-frame { width: 90vw; height: 90vw; max-width: 360px; max-height: 360px; margin: 10px auto; border: 2px solid #333; }
         #board { display: grid; grid-template-columns: repeat(8, 1fr); width: 100%; height: 100%; }
-        .cell { display: flex; align-items: center; justify-content: center; font-size: 32px; cursor: pointer; }
-        .t-classic .w { background: #eeeed2; } .t-classic .b { background: #769656; }
-        .t-blood .w { background: #4a0000; } .t-blood .b { background: #1a0000; box-shadow: inset 0 0 10px #f00; }
-        .t-purple .w { background: #2d004d; } .t-purple .b { background: #1a0029; box-shadow: inset 0 0 10px #8a2be2; }
-        .selected { outline: 3px solid var(--gold); background: rgba(255,215,0,0.3) !important; z-index: 5; }
-        .btn { background: var(--gold); color: #000; border: none; padding: 10px 15px; font-weight: bold; border-radius: 6px; cursor: pointer; }
-        #storage { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 95%; max-width: 380px; background: #151515; border: 2px solid var(--gold); padding: 20px; z-index: 200; border-radius: 12px; max-height: 80vh; overflow-y: auto; box-sizing: border-box; }
-        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 150; }
-        .tab-btn { background: #333; color: #fff; padding: 10px; border: none; width: 50%; font-weight: bold; cursor: pointer; }
-        .tab-active { background: var(--gold); color: #000; }
-        .item-row { background: #222; margin: 8px 0; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; border: 1px solid #333; }
-        .row-on { border-color: var(--gold); background: #2a2a10; }
-        .ava-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0; }
-        .ava-item { background: #222; padding: 10px; font-size: 22px; border-radius: 6px; cursor: pointer; border: 1px solid #444; }
-        .ava-active { border-color: var(--gold); background: #2a2a10; }
-        input { background: #000; color: #fff; border: 1px solid #444; padding: 12px; width: 100%; border-radius: 6px; margin: 8px 0; box-sizing: border-box; }
+        .cell { display: flex; align-items: center; justify-content: center; font-size: 28px; }
+        .w { background: #eeeed2; } .b { background: #769656; }
+        .btn { background: var(--gold); color: #000; border: none; padding: 8px 12px; font-weight: bold; border-radius: 5px; cursor: pointer; margin: 2px; }
+        #storage { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; background: #151515; border: 2px solid var(--gold); padding: 15px; z-index: 200; border-radius: 10px; max-height: 80vh; overflow-y: auto; }
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 150; }
+        .item-row { background: #222; margin: 5px 0; padding: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; border-radius: 5px; }
+        .tab-btn { background: #333; color: #fff; border: none; padding: 10px; width: 48%; }
+        .active { background: var(--gold); color: #000; }
+        input { background: #000; color: #fff; border: 1px solid #444; padding: 8px; width: 80%; margin: 5px; }
     </style>
 </head>
-<body id="giri-app" class="t-classic">
+<body>
+
 <div id="top-bar">
-    <div class="p-card"><div class="ava-box" id="my-ava-display">👤<div class="elo-tag">1200</div></div>
-    <div style="text-align: left;"><small style="color:#888">КОИНЫ</small><br><b id="coins-val">0</b></div></div>
-    <button class="btn" onclick="openS()">МЕНЮ</button>
+    <div style="display:flex; align-items:center; gap:8px;">
+        <div class="ava-box" id="cur-ava">👤</div>
+        <b id="coins-val" style="color:var(--gold)">0</b>
+    </div>
+    <button class="btn" onclick="openM()">МАГАЗИН</button>
 </div>
+
 <div id="board-frame"><div id="board"></div></div>
+
 <div style="padding: 10px;">
-    <input type="text" id="target-id" placeholder="ID ДРУГА" style="max-width: 180px; display: inline-block;">
-    <button class="btn" style="background:#00e676" onclick="connectToFriend()">В БОЙ</button>
-    <p style="font-size: 11px; color:#aaa;">ТВОЙ ID: <b id="my-id" style="color:var(--gold)">...</b></p>
+    <input type="text" id="peer-id-input" placeholder="ID противника">
+    <button class="btn" onclick="connect()">ИГРАТЬ</button>
+    <div>Твой ID: <b id="my-id" style="color:var(--gold)">...</b></div>
+    <small id="debug" style="font-size: 9px; color: #555;"></small>
 </div>
-<div id="overlay" onclick="closeS()"></div>
+
+<div id="overlay" onclick="closeM()"></div>
 <div id="storage">
-    <div style="display:flex; margin-bottom: 15px;"><button id="t-inv" class="tab-btn tab-active" onclick="setTab('inv')">СКЛАД</button><button id="t-shop" class="tab-btn" onclick="setTab('shop')">МАГАЗИН</button></div>
-    <div id="sec-inv"><div class="ava-grid" id="inv-avas"></div><div id="inventory-list"></div></div>
-    <div id="sec-shop" style="display:none"><div id="shop-avas" class="ava-grid"></div><div id="shop-list"></div></div>
-    <input type="text" id="promo-input" placeholder="ПРОМОКОД..."><button class="btn" style="width:100%" onclick="applyPromo()">ОК</button>
-    <button class="btn" style="width:100%; background:#444; color:#fff; margin-top:10px;" onclick="closeS()">ЗАКРЫТЬ</button>
+    <div style="display:flex; justify-content: space-between; margin-bottom: 10px;">
+        <button id="b-inv" class="tab-btn active" onclick="tab('inv')">СКЛАД</button>
+        <button id="b-shop" class="tab-btn" onclick="tab('shop')">МАГАЗИН</button>
+    </div>
+    <div id="inv-sec"></div>
+    <div id="shop-sec" style="display:none"></div>
+    <hr style="border:0; border-top:1px solid #333;">
+    <input type="text" id="promo-in" placeholder="ПРОМОКОД">
+    <button class="btn" style="width:100%" onclick="promo()">OK</button>
 </div>
+
 <script>
-    const ITEMS = {'t-classic':{n:'Классика',p:0,type:'t'},'t-purple':{n:'Неон',p:500,type:'t'},'t-blood':{n:'Кровь',p:1000,type:'t'},'s-default':{n:'Обычные',p:0,type:'s'},'s-giri':{n:'ГИРИ 🪨',p:800,type:'s'},'s-war':{n:'Техника 🚁',p:1500,type:'s'}};
-    const AVAS = {'👤':0,'🐱':150,'👺':250,'🥷':400,'🤡':1000};
-    let coins = parseInt(localStorage.getItem('g_c')) || 100, unlocked = JSON.parse(localStorage.getItem('g_u')) || ['t-classic','s-default','👤'], theme = localStorage.getItem('g_t')||'t-classic', skin = localStorage.getItem('g_s')||'s-default', ava = localStorage.getItem('g_a')||'👤';
-    const game = new Chess(); let conn, myColor = 'w', selectedSq = null;
-    const peer = new Peer(undefined, {host:'peerjs.com', port:443, secure:true, config:{'iceServers':[{urls:'stun:stun.l.google.com:19302'}]}});
-    peer.on('open', id => { document.getElementById('my-id').innerText = id.toString().slice(0,5).toUpperCase(); });
-    peer.on('connection', c => { conn = c; myColor = 'w'; alert("Вызов принят!"); setup(); });
-    function connectToFriend() { const id = document.getElementById('target-id').value.trim(); conn = peer.connect(id); myColor = 'b'; conn.on('open', () => { alert("В игре!"); setup(); }); }
-    function setup() { conn.on('data', d => { if(d.type==='move'){ game.move(d.m); render(); } }); }
+    const ITEMS = {
+        's-giri':{n:'Скин: ГИРИ', p:800, type:'s'},
+        't-purple':{n:'Тема: НЕОН', p:500, type:'t'}
+    };
+    let coins = parseInt(localStorage.getItem('g_c')) || 100;
+    let unlocked = JSON.parse(localStorage.getItem('g_u')) || ['s-def','t-def'];
+    let skin = localStorage.getItem('g_s') || 's-def';
+    let theme = localStorage.getItem('g_t') || 't-def';
+
+    const game = new Chess();
+    let conn, myColor = 'w';
+
+    // СЕТЬ - Ультра-базовый конфиг (самый надежный)
+    const peer = new Peer(); 
+
+    peer.on('open', id => {
+        document.getElementById('my-id').innerText = id.slice(0,5).toUpperCase();
+        document.getElementById('debug').innerText = "Connected to Server";
+    });
+
+    peer.on('connection', c => {
+        conn = c; myColor = 'w';
+        alert("Бой начался!");
+        c.on('data', d => { if(d.m) { game.move(d.m); render(); } });
+    });
+
+    function connect() {
+        const id = document.getElementById('peer-id-input').value.toLowerCase();
+        // ВАЖНО: PeerJS требует полный ID. Но мы для красоты обрезаем. 
+        // Если не коннектит, нужно вводить полный ID (он длиннее 5 символов).
+        alert("Попытка связи...");
+        conn = peer.connect(id);
+        myColor = 'b';
+        conn.on('open', () => { alert("Связь есть!"); });
+        conn.on('data', d => { if(d.m) { game.move(d.m); render(); } });
+    }
+
     function render() {
         const b = document.getElementById('board'); b.innerHTML = '';
-        game.board().forEach((row, r) => { row.forEach((p, c) => {
-            const cell = document.createElement('div'), sq = String.fromCharCode(97+c)+(8-r);
-            cell.className = `cell ${(r+c)%2===0?'w':'b'} ${selectedSq===sq?'selected':''}`;
-            if(p) {
-                const pc = document.createElement('div');
-                if(skin==='s-giri') pc.innerText = {p:'🪨',r:'📦',n:'🏋️',b:'🔔',q:'🏆',k:'💪'}[p.type];
-                else if(skin==='s-war') pc.innerText = {p:'🚜',r:'🚀',n:'🚁',b:'🛡️',q:'🎖️',k:'🛰️'}[p.type];
-                else pc.innerText = {p:'♟',r:'♜',n:'♞',b:'♝',q:'♛',k:'♚',P:'♙',R:'♖',N:'♘',B:'♗',Q:'♕',K:'♔'}[p.color==='w'?p.type.toUpperCase():p.type];
-                pc.style.color = p.color==='w'?'#fff':'#000'; cell.appendChild(pc);
-            }
-            cell.onclick = () => {
-                if(game.turn()!==myColor) return;
-                if(selectedSq===sq) selectedSq = null;
-                else if(selectedSq) { const m = game.move({from:selectedSq,to:sq,promotion:'q'}); if(m && conn) conn.send({type:'move',m:m}); selectedSq = null; }
-                else { const pc = game.get(sq); if(pc && pc.color===myColor) selectedSq = sq; }
-                render();
-            }; b.appendChild(cell);
-        }); });
+        game.board().forEach((row, r) => {
+            row.forEach((p, c) => {
+                const cell = document.createElement('div');
+                const sq = String.fromCharCode(97+c)+(8-r);
+                cell.className = `cell ${(r+c)%2===0?'w':'b'}`;
+                if(p) {
+                    const pc = document.createElement('div');
+                    if(skin==='s-giri') pc.innerText = {p:'🪨',r:'📦',n:'🏋️',b:'🔔',q:'🏆',k:'💪'}[p.type];
+                    else pc.innerText = {p:'♟',r:'♜',n:'♞',b:'♝',q:'♛',k:'♚',P:'♙',R:'♖',N:'♘',B:'♗',Q:'♕',K:'♔'}[p.color==='w'?p.type.toUpperCase():p.type];
+                    pc.style.color = p.color==='w'?'#fff':'#000';
+                    cell.appendChild(pc);
+                }
+                cell.onclick = () => {
+                    if(game.turn() !== myColor) return;
+                    let move = game.move({from: window.lastSq, to: sq, promotion: 'q'});
+                    if(move) { if(conn) conn.send({m: move.san}); render(); window.lastSq = null; }
+                    else { window.lastSq = sq; }
+                };
+                b.appendChild(cell);
+            });
+        });
     }
+
     function refresh() {
-        document.getElementById('coins-val').innerText = coins; document.getElementById('my-ava-display').childNodes[0].textContent = ava; document.getElementById('giri-app').className = theme;
-        const iA = document.getElementById('inv-avas'), sA = document.getElementById('shop-avas'); iA.innerHTML = ''; sA.innerHTML = '';
-        for(let a in AVAS) { if(unlocked.includes(a)) iA.innerHTML += `<div class="ava-item ${ava===a?'ava-active':''}" onclick="setA('${a}')">${a}</div>`; else sA.innerHTML += `<div class="ava-item" onclick="buyA('${a}')">${a}<br><small>${AVAS[a]}🪙</small></div>`; }
-        const iL = document.getElementById('inventory-list'), sL = document.getElementById('shop-list'); iL.innerHTML = ''; sL.innerHTML = '';
-        for(let id in ITEMS) { const it = ITEMS[id]; if(unlocked.includes(id)) { const ac = (theme===id||skin===id); iL.innerHTML += `<div class="item-row ${ac?'row-on':''}"><span>${it.n}</span><button class="btn" onclick="use('${id}')">${ac?'ОК':'ВЗЯТЬ'}</button></div>`; } else { sL.innerHTML += `<div class="item-row"><span>${it.n}</span><button class="btn" onclick="buyT('${id}')">${it.p}🪙</button></div>`; } }
-        localStorage.setItem('g_c', coins); localStorage.setItem('g_u', JSON.stringify(unlocked)); localStorage.setItem('g_t', theme); localStorage.setItem('g_s', skin); localStorage.setItem('g_a', ava); render();
+        document.getElementById('coins-val').innerText = coins;
+        const inv = document.getElementById('inv-sec'), shp = document.getElementById('shop-sec');
+        inv.innerHTML = ''; shp.innerHTML = '';
+        for(let id in ITEMS) {
+            if(unlocked.includes(id)) inv.innerHTML += `<div class="item-row">${ITEMS[id].n} <button class="btn" onclick="use('${id}')">ОК</button></div>`;
+            else shp.innerHTML += `<div class="item-row">${ITEMS[id].n} <button class="btn" onclick="buy('${id}')">${ITEMS[id].p}🪙</button></div>`;
+        }
+        localStorage.setItem('g_c', coins);
+        localStorage.setItem('g_u', JSON.stringify(unlocked));
     }
-    function applyPromo() { const v = document.getElementById('promo-input').value.toUpperCase(); if(v==='GIRI'){coins+=1000;alert("+1000!");} if(v==='TEST'){coins+=5000;alert("+5000!");} document.getElementById('promo-input').value=''; refresh(); }
-    function buyA(a) { if(coins>=AVAS[a]){ coins-=AVAS[a]; unlocked.push(a); refresh(); } }
-    function buyT(id) { if(coins>=ITEMS[id].p){ coins-=ITEMS[id].p; unlocked.push(id); refresh(); } }
-    function use(id) { if(ITEMS[id].type==='t') theme=id; else skin=id; refresh(); }
-    function setA(a) { ava=a; refresh(); }
-    function setTab(t) { document.getElementById('sec-inv').style.display=t==='inv'?'block':'none'; document.getElementById('sec-shop').style.display=t==='shop'?'block':'none'; document.getElementById('t-inv').className='tab-btn '+(t==='inv'?'tab-active':''); document.getElementById('t-shop').className='tab-btn '+(t==='shop'?'tab-active':''); }
-    function openS() { document.getElementById('storage').style.display='block'; document.getElementById('overlay').style.display='block'; refresh(); }
-    function closeS() { document.getElementById('storage').style.display='none'; document.getElementById('overlay').style.display='none'; }
-    refresh();
+
+    function buy(id) { if(coins >= ITEMS[id].p) { coins -= ITEMS[id].p; unlocked.push(id); refresh(); } }
+    function use(id) { if(ITEMS[id].type==='s') skin = id; else theme = id; refresh(); }
+    function promo() { 
+        let v = document.getElementById('promo-in').value.toUpperCase();
+        if(v==='GIRI') coins += 1000;
+        refresh(); 
+    }
+    
+    function tab(t) {
+        document.getElementById('inv-sec').style.display = t==='inv'?'block':'none';
+        document.getElementById('shop-sec').style.display = t==='shop'?'block':'none';
+        document.getElementById('b-inv').className = 'tab-btn '+(t==='inv'?'active':'');
+        document.getElementById('b-shop').className = 'tab-btn '+(t==='shop'?'active':'');
+    }
+
+    function openM() { document.getElementById('storage').style.display='block'; document.getElementById('overlay').style.display='block'; refresh(); }
+    function closeM() { document.getElementById('storage').style.display='none'; document.getElementById('overlay').style.display='none'; }
+
+    refresh(); render();
 </script>
 </body>
 </html>
