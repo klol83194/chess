@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GIRI CHESS: SHORT ID</title>
+    <title>GIRI CHESS: STABLE EDITION</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
@@ -28,9 +28,6 @@
         .tab-active { background: var(--gold); color: #000; }
         .item-row { background: #222; margin: 8px 0; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; border: 1px solid #333; font-size: 14px; }
         .row-on { border-color: var(--gold); background: #2a2a10; }
-        .ava-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0; }
-        .ava-item { background: #222; padding: 10px; font-size: 24px; border-radius: 8px; cursor: pointer; border: 1px solid #444; }
-        .ava-active { border-color: var(--gold); background: #2a2a10; }
         input { background: #000; color: #fff; border: 1px solid #444; padding: 12px; width: 100%; border-radius: 6px; margin: 10px 0; box-sizing: border-box; }
     </style>
 </head>
@@ -49,7 +46,7 @@
 <div style="padding: 10px;">
     <input type="text" id="target-id" placeholder="ID ДРУГА" style="max-width: 200px; display: inline-block;">
     <button class="btn" style="background:#00e676" onclick="connectToFriend()">В БОЙ</button>
-    <p style="font-size: 11px; color:#aaa;">ТВОЙ ID: <b id="my-id" style="color:var(--gold)">ПОЛУЧЕНИЕ...</b></p>
+    <p style="font-size: 11px; color:#aaa;">ТВОЙ ID: <b id="my-id" style="color:var(--gold)">ПОДКЛЮЧЕНИЕ...</b></p>
 </div>
 
 <div id="overlay" onclick="closeS()"></div>
@@ -87,60 +84,53 @@
     const game = new Chess();
     let conn, myColor = 'w', selectedSq = null;
 
-    // ГЕНЕРАЦИЯ КОРОТКОГО ID (5 цифр)
-    function generateShortID() {
-        return Math.floor(10000 + Math.random() * 90000).toString();
-    }
-
-    // ИНИЦИАЛИЗАЦИЯ PEER С КОРОТКИМ ID
-    let myShortID = generateShortID();
-    const peer = new Peer(myShortID, {
-        debug: 2,
-        config: {'iceServers': [
-            { url: 'stun:stun.l.google.com:19302' },
-            { url: 'stun:stun1.l.google.com:19302' }
-        ]}
+    // Сверхстабильная инициализация
+    const peer = new Peer(undefined, {
+        host: '0.peerjs.com',
+        secure: true,
+        port: 443,
+        config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] }
     });
 
     peer.on('open', id => {
+        // Делаем ID коротким (только первые 5 символов)
+        const shortId = id.toString().substring(0, 5).toUpperCase();
+        // Мы не можем изменить реальный ID в PeerJS после создания, 
+        // поэтому будем использовать полный ID, но показывать короткий "псевдоним", если получится.
+        // Но чтобы всё работало, оставим оригинальный ID, просто сделаем его читабельнее.
         document.getElementById('my-id').innerText = id;
-        console.log("ID готов:", id);
     });
 
     peer.on('error', err => {
-        console.error('Ошибка:', err.type);
-        // Если ID занят (unavailable-id), пробуем еще раз с новым номером
-        if(err.type === 'unavailable-id') {
-            location.reload(); 
+        console.error('Peer Error:', err.type);
+        if(err.type === 'network') {
+            document.getElementById('my-id').innerText = "ОШИБКА СЕТИ (ВКЛЮЧИ ИНТЕРНЕТ)";
         } else {
             document.getElementById('my-id').innerText = "ОШИБКА: " + err.type;
         }
     });
 
     peer.on('connection', c => {
-        conn = c;
-        myColor = 'w';
-        alert("Противник вошел! Твой ход.");
+        conn = c; myColor = 'w';
+        alert("Противник готов! Твой ход.");
         setupComm();
     });
 
     function connectToFriend() {
         const id = document.getElementById('target-id').value.trim();
         if(!id) return;
-        conn = peer.connect(id);
+        conn = peer.connect(id, { reliable: true });
         myColor = 'b';
         conn.on('open', () => {
-            alert("Подключено! Ты играешь за черных.");
+            alert("Подключено к другу!");
             setupComm();
         });
+        conn.on('error', () => alert("Ошибка подключения"));
     }
 
     function setupComm() {
         conn.on('data', d => {
-            if(d.type === 'move') {
-                game.move(d.m);
-                render();
-            }
+            if(d.type === 'move') { game.move(d.m); render(); }
         });
     }
 
@@ -166,12 +156,8 @@
                     if(selectedSq===sq) selectedSq = null;
                     else if(selectedSq) {
                         const m = game.move({from: selectedSq, to: sq, promotion: 'q'});
-                        if(m) {
-                            if(conn) conn.send({type:'move', m: m});
-                            selectedSq = null;
-                        } else {
-                            selectedSq = null;
-                        }
+                        if(m && conn) conn.send({type:'move', m: m});
+                        selectedSq = null;
                     } else {
                         const pc = game.get(sq);
                         if(pc && pc.color===myColor) selectedSq = sq;
@@ -229,10 +215,8 @@
         document.getElementById('t-inv').className = 'tab-btn '+(t==='inv'?'tab-active':'');
         document.getElementById('t-shop').className = 'tab-btn '+(t==='shop'?'tab-active':'');
     }
-
     function openS() { document.getElementById('storage').style.display='block'; document.getElementById('overlay').style.display='block'; refresh(); }
     function closeS() { document.getElementById('storage').style.display='none'; document.getElementById('overlay').style.display='none'; }
-
     refresh();
 </script>
 </body>
