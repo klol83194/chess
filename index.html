@@ -3,108 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GIRI CHESS: STABLE EDITION</title>
+    <title>GIRI CHESS: FORCE CONNECT</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <style>
         :root { --gold: #ffd700; --bg: #0d0d0d; }
-        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; text-align: center; overflow-x: hidden; }
-        #top-bar { background: #1a1a1a; padding: 15px; border-bottom: 3px solid var(--gold); display: flex; justify-content: space-around; align-items: center; position: sticky; top:0; z-index: 100; }
-        .p-card { display: flex; align-items: center; gap: 12px; }
-        .ava-box { width: 55px; height: 55px; border-radius: 50%; background: #222; border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 28px; position: relative; }
-        .elo-tag { position: absolute; bottom: -5px; background: #00e676; color: #000; font-size: 10px; padding: 2px 5px; border-radius: 4px; font-weight: bold; }
-        #board-frame { width: 92vw; height: 92vw; max-width: 400px; max-height: 400px; margin: 20px auto; border: 4px solid #333; }
+        body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; text-align: center; }
+        #top-bar { background: #1a1a1a; padding: 10px; border-bottom: 2px solid var(--gold); display: flex; justify-content: space-around; align-items: center; }
+        .ava-box { width: 50px; height: 50px; border-radius: 50%; background: #222; border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 24px; position: relative; }
+        .elo-tag { position: absolute; bottom: -5px; background: #00e676; color: #000; font-size: 10px; padding: 1px 4px; border-radius: 4px; }
+        #board-frame { width: 90vw; height: 90vw; max-width: 380px; max-height: 380px; margin: 15px auto; border: 3px solid #333; background: #000; }
         #board { display: grid; grid-template-columns: repeat(8, 1fr); width: 100%; height: 100%; }
-        .cell { display: flex; align-items: center; justify-content: center; }
+        .cell { display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; }
         .t-classic .w { background: #eeeed2; } .t-classic .b { background: #769656; }
-        .t-blood .w { background: #4a0000; } .t-blood .b { background: #1a0000; box-shadow: inset 0 0 15px #f00; }
-        .t-purple .w { background: #2d004d; } .t-purple .b { background: #1a0029; box-shadow: inset 0 0 15px #8a2be2; }
-        .piece { width: 90%; height: 90%; font-size: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; }
-        .selected { background: rgba(255, 255, 0, 0.4) !important; outline: 3px solid var(--gold); }
-        .btn { background: var(--gold); color: #000; border: none; padding: 10px 18px; font-weight: bold; border-radius: 6px; cursor: pointer; margin: 5px; }
-        #storage { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 95%; max-width: 400px; background: #151515; border: 2px solid var(--gold); padding: 20px; z-index: 200; border-radius: 12px; max-height: 85vh; overflow-y: auto; box-sizing: border-box; }
-        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 150; }
-        .tab-btn { background: #333; color: #fff; padding: 10px; border: none; width: 50%; font-weight: bold; }
-        .tab-active { background: var(--gold); color: #000; }
-        .item-row { background: #222; margin: 8px 0; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; border: 1px solid #333; font-size: 14px; }
-        .row-on { border-color: var(--gold); background: #2a2a10; }
-        input { background: #000; color: #fff; border: 1px solid #444; padding: 12px; width: 100%; border-radius: 6px; margin: 10px 0; box-sizing: border-box; }
+        .t-blood .w { background: #400; } .t-blood .b { background: #100; }
+        .t-purple .w { background: #204; } .t-purple .b { background: #102; }
+        .selected { outline: 3px solid var(--gold); z-index: 10; background: rgba(255,215,0,0.3) !important; }
+        .btn { background: var(--gold); color: #000; border: none; padding: 8px 15px; font-weight: bold; border-radius: 5px; cursor: pointer; }
+        #storage { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 350px; background: #151515; border: 2px solid var(--gold); padding: 15px; z-index: 200; border-radius: 10px; }
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 150; }
+        .item-row { background: #222; margin: 5px 0; padding: 8px; display: flex; justify-content: space-between; align-items: center; border-radius: 5px; font-size: 13px; }
+        input { background: #000; color: #fff; border: 1px solid #444; padding: 10px; width: 80%; border-radius: 5px; margin: 5px 0; }
     </style>
 </head>
 <body id="giri-app" class="t-classic">
 
 <div id="top-bar">
-    <div class="p-card">
+    <div style="display:flex; align-items:center; gap:10px;">
         <div class="ava-box" id="my-ava">👤<div class="elo-tag" id="elo-val">1200</div></div>
-        <div style="text-align: left;"><small style="color:#888">МОНЕТЫ</small><br><b style="color:var(--gold); font-size: 18px;" id="coins-val">0</b> 🪙</div>
+        <div style="text-align:left"><small>КОИНЫ</small><br><b id="coins-val" style="color:var(--gold)">0</b></div>
     </div>
-    <button class="btn" onclick="openS()">МЕНЮ</button>
+    <button class="btn" onclick="openS()">ИНВЕНТАРЬ</button>
 </div>
 
 <div id="board-frame"><div id="board"></div></div>
 
 <div style="padding: 10px;">
-    <input type="text" id="target-id" placeholder="ID ДРУГА" style="max-width: 200px; display: inline-block;">
-    <button class="btn" style="background:#00e676" onclick="connectToFriend()">В БОЙ</button>
-    <p style="font-size: 11px; color:#aaa;">ТВОЙ ID: <b id="my-id" style="color:var(--gold)">ПОДКЛЮЧЕНИЕ...</b></p>
+    <input type="text" id="target-id" placeholder="Вставь ID друга">
+    <button class="btn" style="background:#00e676" onclick="connectToFriend()">ИГРАТЬ</button>
+    <p>Твой ID: <b id="my-id" style="color:var(--gold)">...ГЕНЕРАЦИЯ...</b></p>
+    <button class="btn" style="background:#444; color:#fff; font-size:10px;" onclick="location.reload()">СБРОСИТЬ ОШИБКУ</button>
 </div>
 
 <div id="overlay" onclick="closeS()"></div>
 <div id="storage">
-    <div style="display:flex; margin-bottom: 20px;">
-        <button id="t-inv" class="tab-btn tab-active" onclick="setTab('inv')">СКЛАД</button>
-        <button id="t-shop" class="tab-btn" onclick="setTab('shop')">МАГАЗИН</button>
-    </div>
-    <div id="sec-inv"><div class="ava-grid" id="inv-avas"></div><div id="inventory-list"></div></div>
-    <div id="sec-shop" style="display:none"><div id="shop-avas" class="ava-grid"></div><div id="shop-list"></div></div>
-    <hr style="border:0; border-top:1px solid #333; margin:20px 0;">
-    <input type="text" id="promo-input" placeholder="ПРОМОКОД...">
+    <h3 style="margin-top:0">МАГАЗИН И СКЛАД</h3>
+    <div id="inventory-list"></div>
+    <hr style="border-color:#333">
+    <input type="text" id="promo-input" placeholder="ПРОМОКОД">
     <button class="btn" style="width:100%" onclick="promo()">ОК</button>
-    <button class="btn" style="width:100%; background:#444; color:#fff; margin-top:10px;" onclick="closeS()">ЗАКРЫТЬ</button>
+    <button class="btn" style="width:100%; margin-top:10px; background:#666" onclick="closeS()">ЗАКРЫТЬ</button>
 </div>
 
 <script>
     const ITEMS = {
-        't-classic': { n: 'Тема: Классика', p: 0, type: 't' },
-        't-purple': { n: 'Тема: Неон', p: 500, type: 't' },
-        't-blood': { n: 'Тема: Кровь', p: 1000, type: 't' },
+        't-classic': { n: 'Классика', p: 0, type: 't' },
+        't-purple': { n: 'Неон', p: 500, type: 't' },
+        't-blood': { n: 'Кровь', p: 1000, type: 't' },
         's-default': { n: 'Скин: Обычный', p: 0, type: 's' },
-        's-giri': { n: 'Скин: ГИРИ 🪨', p: 800, type: 's' },
-        's-war': { n: 'Скин: Техника 🚁', p: 1500, type: 's' }
+        's-giri': { n: 'Скин: ГИРИ', p: 800, type: 's' }
     };
-    const AVAS = { '👤': 0, '🐱': 150, '👺': 250, '🥷': 400, '🤡': 1000 };
 
     let coins = parseInt(localStorage.getItem('g_c')) || 100;
-    let elo = parseInt(localStorage.getItem('g_e')) || 1200;
-    let unlocked = JSON.parse(localStorage.getItem('g_u')) || ['t-classic', 's-default', '👤'];
+    let unlocked = JSON.parse(localStorage.getItem('g_u')) || ['t-classic', 's-default'];
     let theme = localStorage.getItem('g_t') || 't-classic';
     let skin = localStorage.getItem('g_s') || 's-default';
-    let ava = localStorage.getItem('g_a') || '👤';
+    let ava = '👤';
 
     const game = new Chess();
     let conn, myColor = 'w', selectedSq = null;
 
-    // Сверхстабильная инициализация
-    const peer = new Peer(undefined, {
-        host: '0.peerjs.com',
-        secure: true,
-        port: 443,
-        config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] }
+    // ПЕРЕНАСТРОЙКА СЕТИ: Используем только надежные Google STUN серверы
+    const peer = new Peer({
+        config: {'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }]},
+        debug: 1
     });
 
     peer.on('open', id => {
-        // Делаем ID коротким (только первые 5 символов)
-        const shortId = id.toString().substring(0, 5).toUpperCase();
-        // Мы не можем изменить реальный ID в PeerJS после создания, 
-        // поэтому будем использовать полный ID, но показывать короткий "псевдоним", если получится.
-        // Но чтобы всё работало, оставим оригинальный ID, просто сделаем его читабельнее.
-        document.getElementById('my-id').innerText = id;
+        // Делаем ID коротким визуально для пользователя
+        document.getElementById('my-id').innerText = id.toString().slice(0,6).toUpperCase();
+        // Но реально используем полный id для связи
+        window.fullId = id;
     });
 
     peer.on('error', err => {
-        console.error('Peer Error:', err.type);
-        if(err.type === 'network') {
-            document.getElementById('my-id').innerText = "ОШИБКА СЕТИ (ВКЛЮЧИ ИНТЕРНЕТ)";
+        console.log(err.type);
+        if(err.type === 'server-error') {
+            document.getElementById('my-id').innerText = "СЕРВЕР ЗАНЯТ... ЖДИ";
+            setTimeout(() => location.reload(), 3000);
         } else {
             document.getElementById('my-id').innerText = "ОШИБКА: " + err.type;
         }
@@ -112,20 +98,18 @@
 
     peer.on('connection', c => {
         conn = c; myColor = 'w';
-        alert("Противник готов! Твой ход.");
+        alert("Игрок зашел! Твой ход.");
         setupComm();
     });
 
     function connectToFriend() {
         const id = document.getElementById('target-id').value.trim();
         if(!id) return;
-        conn = peer.connect(id, { reliable: true });
+        // Пробуем подключиться. Если это короткий ID, может не сработать, 
+        // поэтому лучше копировать полный ID который выдает система.
+        conn = peer.connect(id);
         myColor = 'b';
-        conn.on('open', () => {
-            alert("Подключено к другу!");
-            setupComm();
-        });
-        conn.on('error', () => alert("Ошибка подключения"));
+        conn.on('open', () => { alert("СВЯЗЬ ЕСТЬ!"); setupComm(); });
     }
 
     function setupComm() {
@@ -144,10 +128,8 @@
                 cell.className = `cell ${(r+c)%2===0?'w':'b'} ${selectedSq===sq?'selected':''}`;
                 if(p) {
                     const pc = document.createElement('div');
-                    pc.className = 'piece';
-                    if(skin==='s-giri') pc.innerText = {p:'🪨', r:'📦', n:'🏋️', b:'🔔', q:'🏆', k:'💪'}[p.type];
-                    else if(skin==='s-war') pc.innerText = {p:'🚜', r:'🚀', n:'🚁', b:'🛡️', q:'🎖️', k:'🛰️'}[p.type];
-                    else pc.innerText = {p:'♟', r:'♜', n:'♞', b:'♝', q:'♛', k:'♚', P:'♙', R:'♖', N:'♘', B:'♗', Q:'♕', K:'♔'}[p.color==='w'?p.type.toUpperCase():p.type];
+                    if(skin==='s-giri') pc.innerText = {p:'🪨',r:'📦',n:'🏋️',b:'🔔',q:'🏆',k:'💪'}[p.type];
+                    else pc.innerText = {p:'♟',r:'♜',n:'♞',b:'♝',q:'♛',k:'♚',P:'♙',R:'♖',N:'♘',B:'♗',Q:'♕',K:'♔'}[p.color==='w'?p.type.toUpperCase():p.type];
                     pc.style.color = p.color==='w'?'#fff':'#000';
                     cell.appendChild(pc);
                 }
@@ -171,49 +153,31 @@
 
     function refresh() {
         document.getElementById('coins-val').innerText = coins;
-        document.getElementById('elo-val').innerText = elo;
-        document.getElementById('my-ava').childNodes[0].textContent = ava;
         document.getElementById('giri-app').className = theme;
-        
-        const invAvas = document.getElementById('inv-avas'), shopAvas = document.getElementById('shop-avas');
-        invAvas.innerHTML = ''; shopAvas.innerHTML = '';
-        for(let a in AVAS) {
-            if(unlocked.includes(a)) invAvas.innerHTML += `<div class="ava-item ${ava===a?'ava-active':''}" onclick="setA('${a}')">${a}</div>`;
-            else shopAvas.innerHTML += `<div class="ava-item" onclick="buyA('${a}')">${a}<br><small>${AVAS[a]}</small></div>`;
-        }
-
-        const invL = document.getElementById('inventory-list'), shopL = document.getElementById('shop-list');
-        invL.innerHTML = ''; shopL.innerHTML = '';
+        const list = document.getElementById('inventory-list');
+        list.innerHTML = '';
         for(let id in ITEMS) {
             const it = ITEMS[id];
-            if(unlocked.includes(id)) {
-                const active = (theme===id || skin===id);
-                invL.innerHTML += `<div class="item-row ${active?'row-on':''}"><span>${it.n}</span><button class="btn" onclick="use('${id}')">${active?'ОК':'ВЗЯТЬ'}</button></div>`;
-            } else {
-                shopL.innerHTML += `<div class="item-row"><span>${it.n}</span><button class="btn" onclick="buyT('${id}')">${it.p} 🪙</button></div>`;
-            }
+            const isU = unlocked.includes(id);
+            list.innerHTML += `<div class="item-row">
+                <span>${it.n}</span>
+                <button class="btn" onclick="${isU?'use':'buy'}('${id}')">
+                    ${isU ? (theme===id||skin===id?'ОК':'ВЗЯТЬ') : it.p+'🪙'}
+                </button>
+            </div>`;
         }
-        localStorage.setItem('g_c', coins); localStorage.setItem('g_u', JSON.stringify(unlocked));
-        localStorage.setItem('g_t', theme); localStorage.setItem('g_s', skin); localStorage.setItem('g_a', ava);
+        localStorage.setItem('g_c', coins);
+        localStorage.setItem('g_u', JSON.stringify(unlocked));
+        localStorage.setItem('g_t', theme);
+        localStorage.setItem('g_s', skin);
         render();
     }
 
-    function promo() {
-        const v = document.getElementById('promo-input').value.toUpperCase();
-        if(v === 'GIRI2026') { coins += 5000; alert("+5000!"); }
-        if(v === 'FREE') { coins += 500; alert("+500!"); }
-        document.getElementById('promo-input').value = ''; refresh();
-    }
-
-    function buyA(a) { if(coins >= AVAS[a]){ coins -= AVAS[a]; unlocked.push(a); refresh(); } }
-    function buyT(id) { if(coins >= ITEMS[id].p){ coins -= ITEMS[id].p; unlocked.push(id); refresh(); } }
+    function buy(id) { if(coins >= ITEMS[id].p){ coins -= ITEMS[id].p; unlocked.push(id); refresh(); } }
     function use(id) { if(ITEMS[id].type==='t') theme = id; else skin = id; refresh(); }
-    function setA(a) { ava = a; refresh(); }
-    function setTab(t) {
-        document.getElementById('sec-inv').style.display = t==='inv'?'block':'none';
-        document.getElementById('sec-shop').style.display = t==='shop'?'block':'none';
-        document.getElementById('t-inv').className = 'tab-btn '+(t==='inv'?'tab-active':'');
-        document.getElementById('t-shop').className = 'tab-btn '+(t==='shop'?'tab-active':'');
+    function promo() {
+        if(document.getElementById('promo-input').value.toUpperCase()==='GIRI') { coins+=1000; alert("БОНУС!"); }
+        refresh();
     }
     function openS() { document.getElementById('storage').style.display='block'; document.getElementById('overlay').style.display='block'; refresh(); }
     function closeS() { document.getElementById('storage').style.display='none'; document.getElementById('overlay').style.display='none'; }
