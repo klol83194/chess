@@ -3,153 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GIRI CHESS: FIX</title>
+    <title>GIRI CHESS: FINAL FIX</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root { --gold: #ffd700; --bg: #0d0d0d; }
         body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; text-align: center; }
         #top-bar { background: #1a1a1a; padding: 10px; border-bottom: 3px solid var(--gold); display: flex; justify-content: space-around; align-items: center; }
-        .ava-box { width: 45px; height: 45px; border-radius: 50%; background: #222; border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 20px; }
-        #board-frame { width: 90vw; height: 90vw; max-width: 360px; max-height: 360px; margin: 10px auto; border: 2px solid #333; }
+        .p-info { display: flex; align-items: center; gap: 8px; }
+        .ava-box { width: 45px; height: 45px; border-radius: 50%; background: #222; border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 22px; }
+        
+        #board-frame { width: 92vw; height: 92vw; max-width: 380px; max-height: 380px; margin: 15px auto; border: 3px solid #333; }
         #board { display: grid; grid-template-columns: repeat(8, 1fr); width: 100%; height: 100%; }
-        .cell { display: flex; align-items: center; justify-content: center; font-size: 28px; }
-        .w { background: #eeeed2; } .b { background: #769656; }
-        .btn { background: var(--gold); color: #000; border: none; padding: 8px 12px; font-weight: bold; border-radius: 5px; cursor: pointer; margin: 2px; }
-        #storage { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; background: #151515; border: 2px solid var(--gold); padding: 15px; z-index: 200; border-radius: 10px; max-height: 80vh; overflow-y: auto; }
+        .cell { display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; }
+        
+        /* ТЕМЫ */
+        .t-def .w { background: #eeeed2; } .t-def .b { background: #769656; }
+        .t-purple .w { background: #2d004d; } .t-purple .b { background: #1a0029; }
+        .t-blood .w { background: #4a0000; } .t-blood .b { background: #1a0000; }
+        
+        .selected { outline: 3px solid var(--gold) inset; background: rgba(255,215,0,0.3) !important; }
+        .btn { background: var(--gold); color: #000; border: none; padding: 10px 15px; font-weight: bold; border-radius: 6px; cursor: pointer; }
+        
+        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 380px; background: #151515; border: 2px solid var(--gold); padding: 20px; z-index: 200; border-radius: 12px; max-height: 85vh; overflow-y: auto; }
         #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 150; }
-        .item-row { background: #222; margin: 5px 0; padding: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; border-radius: 5px; }
-        .tab-btn { background: #333; color: #fff; border: none; padding: 10px; width: 48%; }
-        .active { background: var(--gold); color: #000; }
-        input { background: #000; color: #fff; border: 1px solid #444; padding: 8px; width: 80%; margin: 5px; }
+        
+        .tab-nav { display: flex; gap: 5px; margin-bottom: 15px; }
+        .tab-btn { flex: 1; padding: 10px; background: #333; color: #fff; border: none; font-weight: bold; }
+        .tab-btn.active { background: var(--gold); color: #000; }
+        
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 15px; }
+        .grid-item { background: #222; padding: 10px; border-radius: 5px; border: 1px solid #444; font-size: 20px; }
+        .grid-item.active { border-color: var(--gold); background: #2a2a10; }
+        
+        .item-row { background: #222; margin: 8px 0; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 6px; font-size: 14px; }
+        input { background: #000; color: #fff; border: 1px solid #444; padding: 10px; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
     </style>
 </head>
-<body>
+<body class="t-def" id="app">
 
 <div id="top-bar">
-    <div style="display:flex; align-items:center; gap:8px;">
-        <div class="ava-box" id="cur-ava">👤</div>
-        <b id="coins-val" style="color:var(--gold)">0</b>
+    <div class="p-info">
+        <div class="ava-box" id="display-ava">👤</div>
+        <b id="display-coins" style="color:var(--gold)">0</b> 🪙
     </div>
-    <button class="btn" onclick="openM()">МАГАЗИН</button>
+    <button class="btn" onclick="openModal()">МЕНЮ</button>
 </div>
 
 <div id="board-frame"><div id="board"></div></div>
 
 <div style="padding: 10px;">
-    <input type="text" id="peer-id-input" placeholder="ID противника">
+    <input type="text" id="opp-id" placeholder="Введи ID друга" style="width: 70%; display: inline-block;">
     <button class="btn" onclick="connect()">ИГРАТЬ</button>
-    <div>Твой ID: <b id="my-id" style="color:var(--gold)">...</b></div>
-    <small id="debug" style="font-size: 9px; color: #555;"></small>
+    <p>Твой ID: <b id="my-id" style="color:var(--gold)">...</b></p>
 </div>
 
-<div id="overlay" onclick="closeM()"></div>
-<div id="storage">
-    <div style="display:flex; justify-content: space-between; margin-bottom: 10px;">
-        <button id="b-inv" class="tab-btn active" onclick="tab('inv')">СКЛАД</button>
-        <button id="b-shop" class="tab-btn" onclick="tab('shop')">МАГАЗИН</button>
+<div id="overlay" onclick="closeModal()"></div>
+<div id="modal">
+    <div class="tab-nav">
+        <button id="t-inv" class="tab-btn active" onclick="setTab('inv')">СКЛАД</button>
+        <button id="t-shop" class="tab-btn" onclick="setTab('shop')">МАГАЗИН</button>
     </div>
-    <div id="inv-sec"></div>
-    <div id="shop-sec" style="display:none"></div>
-    <hr style="border:0; border-top:1px solid #333;">
+
+    <div id="sec-inv">
+        <div class="grid" id="inv-avas"></div>
+        <div id="inv-items"></div>
+    </div>
+
+    <div id="sec-shop" style="display:none">
+        <div class="grid" id="shop-avas"></div>
+        <div id="shop-items"></div>
+    </div>
+
+    <hr style="border:0; border-top:1px solid #333; margin: 15px 0;">
     <input type="text" id="promo-in" placeholder="ПРОМОКОД">
-    <button class="btn" style="width:100%" onclick="promo()">OK</button>
+    <button class="btn" style="width:100%" onclick="usePromo()">АКТИВИРОВАТЬ</button>
 </div>
 
 <script>
-    const ITEMS = {
-        's-giri':{n:'Скин: ГИРИ', p:800, type:'s'},
-        't-purple':{n:'Тема: НЕОН', p:500, type:'t'}
+    const AVATARS = { '👤':0, '🐱':100, '👺':300, '🥷':500, '🤡':1000 };
+    const SHOP = {
+        't-purple': { n: 'Тема: Неон', p: 500, type: 't' },
+        't-blood': { n: 'Тема: Кровь', p: 800, type: 't' },
+        's-giri': { n: 'Скин: Гири 🪨', p: 1000, type: 's' }
     };
+
     let coins = parseInt(localStorage.getItem('g_c')) || 100;
-    let unlocked = JSON.parse(localStorage.getItem('g_u')) || ['s-def','t-def'];
-    let skin = localStorage.getItem('g_s') || 's-def';
-    let theme = localStorage.getItem('g_t') || 't-def';
+    let unlocked = JSON.parse(localStorage.getItem('g_u')) || ['👤', 't-def', 's-def'];
+    let curAva = localStorage.getItem('g_a') || '👤';
+    let curTheme = localStorage.getItem('g_t') || 't-def';
+    let curSkin = localStorage.getItem('g_s') || 's-def';
 
     const game = new Chess();
-    let conn, myColor = 'w';
+    let conn, myColor = 'w', lastSq = null;
 
-    // СЕТЬ - Ультра-базовый конфиг (самый надежный)
-    const peer = new Peer(); 
-
-    peer.on('open', id => {
-        document.getElementById('my-id').innerText = id.slice(0,5).toUpperCase();
-        document.getElementById('debug').innerText = "Connected to Server";
-    });
-
-    peer.on('connection', c => {
-        conn = c; myColor = 'w';
-        alert("Бой начался!");
-        c.on('data', d => { if(d.m) { game.move(d.m); render(); } });
-    });
+    const peer = new Peer();
+    peer.on('open', id => { document.getElementById('my-id').innerText = id.slice(0,5).toUpperCase(); });
+    peer.on('connection', c => { conn = c; myColor = 'w'; alert("Бой начался!"); setup(); });
 
     function connect() {
-        const id = document.getElementById('peer-id-input').value.toLowerCase();
-        // ВАЖНО: PeerJS требует полный ID. Но мы для красоты обрезаем. 
-        // Если не коннектит, нужно вводить полный ID (он длиннее 5 символов).
-        alert("Попытка связи...");
+        const id = document.getElementById('opp-id').value.toLowerCase();
         conn = peer.connect(id);
         myColor = 'b';
-        conn.on('open', () => { alert("Связь есть!"); });
+        conn.on('open', () => { alert("Подключено!"); setup(); });
+    }
+
+    function setup() {
         conn.on('data', d => { if(d.m) { game.move(d.m); render(); } });
     }
 
     function render() {
         const b = document.getElementById('board'); b.innerHTML = '';
+        document.getElementById('app').className = curTheme;
         game.board().forEach((row, r) => {
             row.forEach((p, c) => {
                 const cell = document.createElement('div');
                 const sq = String.fromCharCode(97+c)+(8-r);
-                cell.className = `cell ${(r+c)%2===0?'w':'b'}`;
+                cell.className = `cell ${(r+c)%2===0?'w':'b'} ${lastSq===sq?'selected':''}`;
                 if(p) {
                     const pc = document.createElement('div');
-                    if(skin==='s-giri') pc.innerText = {p:'🪨',r:'📦',n:'🏋️',b:'🔔',q:'🏆',k:'💪'}[p.type];
+                    if(curSkin === 's-giri') pc.innerText = {p:'🪨',r:'📦',n:'🏋️',b:'🔔',q:'🏆',k:'💪'}[p.type];
                     else pc.innerText = {p:'♟',r:'♜',n:'♞',b:'♝',q:'♛',k:'♚',P:'♙',R:'♖',N:'♘',B:'♗',Q:'♕',K:'♔'}[p.color==='w'?p.type.toUpperCase():p.type];
                     pc.style.color = p.color==='w'?'#fff':'#000';
                     cell.appendChild(pc);
                 }
                 cell.onclick = () => {
                     if(game.turn() !== myColor) return;
-                    let move = game.move({from: window.lastSq, to: sq, promotion: 'q'});
-                    if(move) { if(conn) conn.send({m: move.san}); render(); window.lastSq = null; }
-                    else { window.lastSq = sq; }
+                    if(lastSq) {
+                        const m = game.move({from: lastSq, to: sq, promotion: 'q'});
+                        if(m) { if(conn) conn.send({m: m.san}); lastSq = null; }
+                        else { lastSq = sq; }
+                    } else { lastSq = sq; }
+                    render();
                 };
                 b.appendChild(cell);
             });
         });
     }
 
-    function refresh() {
-        document.getElementById('coins-val').innerText = coins;
-        const inv = document.getElementById('inv-sec'), shp = document.getElementById('shop-sec');
-        inv.innerHTML = ''; shp.innerHTML = '';
-        for(let id in ITEMS) {
-            if(unlocked.includes(id)) inv.innerHTML += `<div class="item-row">${ITEMS[id].n} <button class="btn" onclick="use('${id}')">ОК</button></div>`;
-            else shp.innerHTML += `<div class="item-row">${ITEMS[id].n} <button class="btn" onclick="buy('${id}')">${ITEMS[id].p}🪙</button></div>`;
+    function sync() {
+        document.getElementById('display-coins').innerText = coins;
+        document.getElementById('display-ava').innerText = curAva;
+        
+        const iA = document.getElementById('inv-avas'), sA = document.getElementById('shop-avas');
+        iA.innerHTML = ''; sA.innerHTML = '';
+        for(let a in AVATARS) {
+            if(unlocked.includes(a)) iA.innerHTML += `<div class="grid-item ${curAva===a?'active':''}" onclick="setA('${a}')">${a}</div>`;
+            else sA.innerHTML += `<div class="grid-item" onclick="buyA('${a}')">${a}<br><small>${AVATARS[a]}</small></div>`;
         }
-        localStorage.setItem('g_c', coins);
-        localStorage.setItem('g_u', JSON.stringify(unlocked));
+
+        const iI = document.getElementById('inv-items'), sI = document.getElementById('shop-items');
+        iI.innerHTML = ''; sI.innerHTML = '';
+        for(let id in SHOP) {
+            if(unlocked.includes(id)) iI.innerHTML += `<div class="item-row">${SHOP[id].n} <button class="btn" onclick="use('${id}')">ВЗЯТЬ</button></div>`;
+            else sI.innerHTML += `<div class="item-row">${SHOP[id].n} <button class="btn" onclick="buy('${id}')">${SHOP[id].p}🪙</button></div>`;
+        }
+        localStorage.setItem('g_c', coins); localStorage.setItem('g_u', JSON.stringify(unlocked));
+        localStorage.setItem('g_a', curAva); localStorage.setItem('g_t', curTheme); localStorage.setItem('g_s', curSkin);
+        render();
     }
 
-    function buy(id) { if(coins >= ITEMS[id].p) { coins -= ITEMS[id].p; unlocked.push(id); refresh(); } }
-    function use(id) { if(ITEMS[id].type==='s') skin = id; else theme = id; refresh(); }
-    function promo() { 
+    function buyA(a) { if(coins >= AVATARS[a]) { coins -= AVATARS[a]; unlocked.push(a); sync(); } }
+    function buy(id) { if(coins >= SHOP[id].p) { coins -= SHOP[id].p; unlocked.push(id); sync(); } }
+    function setA(a) { curAva = a; sync(); }
+    function use(id) { if(SHOP[id].type==='s') curSkin = id; else curTheme = id; sync(); }
+    function usePromo() { 
         let v = document.getElementById('promo-in').value.toUpperCase();
-        if(v==='GIRI') coins += 1000;
-        refresh(); 
-    }
-    
-    function tab(t) {
-        document.getElementById('inv-sec').style.display = t==='inv'?'block':'none';
-        document.getElementById('shop-sec').style.display = t==='shop'?'block':'none';
-        document.getElementById('b-inv').className = 'tab-btn '+(t==='inv'?'active':'');
-        document.getElementById('b-shop').className = 'tab-btn '+(t==='shop'?'active':'');
+        if(v === 'GIRI') coins += 1000;
+        if(v === 'TEST') coins += 5000;
+        document.getElementById('promo-in').value = ''; sync();
     }
 
-    function openM() { document.getElementById('storage').style.display='block'; document.getElementById('overlay').style.display='block'; refresh(); }
-    function closeM() { document.getElementById('storage').style.display='none'; document.getElementById('overlay').style.display='none'; }
+    function setTab(t) {
+        document.getElementById('sec-inv').style.display = t==='inv'?'block':'none';
+        document.getElementById('sec-shop').style.display = t==='shop'?'block':'none';
+        document.getElementById('t-inv').className = 'tab-btn '+(t==='inv'?'active':'');
+        document.getElementById('t-shop').className = 'tab-btn '+(t==='shop'?'active':'');
+    }
 
-    refresh(); render();
+    function openModal() { document.getElementById('modal').style.display='block'; document.getElementById('overlay').style.display='block'; sync(); }
+    function closeModal() { document.getElementById('modal').style.display='none'; document.getElementById('overlay').style.display='none'; }
+
+    sync();
 </script>
 </body>
 </html>
