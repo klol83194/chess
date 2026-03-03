@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GIRI CHESS: COMPLETE EDITION</title>
+    <title>GIRI CHESS: SHORT ID</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
@@ -49,7 +49,7 @@
 <div style="padding: 10px;">
     <input type="text" id="target-id" placeholder="ID ДРУГА" style="max-width: 200px; display: inline-block;">
     <button class="btn" style="background:#00e676" onclick="connectToFriend()">В БОЙ</button>
-    <p style="font-size: 11px; color:#aaa;">ТВОЙ ID: <b id="my-id" style="color:var(--gold)">ГЕНЕРАЦИЯ...</b></p>
+    <p style="font-size: 11px; color:#aaa;">ТВОЙ ID: <b id="my-id" style="color:var(--gold)">ПОЛУЧЕНИЕ...</b></p>
 </div>
 
 <div id="overlay" onclick="closeS()"></div>
@@ -87,41 +87,55 @@
     const game = new Chess();
     let conn, myColor = 'w', selectedSq = null;
 
-    // Инициализация PeerJS без лишних настроек для стабильности
-    const peer = new Peer();
+    // ГЕНЕРАЦИЯ КОРОТКОГО ID (5 цифр)
+    function generateShortID() {
+        return Math.floor(10000 + Math.random() * 90000).toString();
+    }
+
+    // ИНИЦИАЛИЗАЦИЯ PEER С КОРОТКИМ ID
+    let myShortID = generateShortID();
+    const peer = new Peer(myShortID, {
+        debug: 2,
+        config: {'iceServers': [
+            { url: 'stun:stun.l.google.com:19302' },
+            { url: 'stun:stun1.l.google.com:19302' }
+        ]}
+    });
 
     peer.on('open', id => {
         document.getElementById('my-id').innerText = id;
+        console.log("ID готов:", id);
     });
 
     peer.on('error', err => {
-        console.error('PeerJS Error:', err.type);
-        document.getElementById('my-id').innerText = "ОШИБКА: " + err.type;
+        console.error('Ошибка:', err.type);
+        // Если ID занят (unavailable-id), пробуем еще раз с новым номером
+        if(err.type === 'unavailable-id') {
+            location.reload(); 
+        } else {
+            document.getElementById('my-id').innerText = "ОШИБКА: " + err.type;
+        }
     });
 
-    // Когда К НАМ подключаются
     peer.on('connection', c => {
         conn = c;
         myColor = 'w';
-        alert("Противник на месте! Твой ход.");
-        initConnection();
+        alert("Противник вошел! Твой ход.");
+        setupComm();
     });
 
-    // Когда МЫ подключаемся
     function connectToFriend() {
         const id = document.getElementById('target-id').value.trim();
         if(!id) return;
-        
         conn = peer.connect(id);
         myColor = 'b';
-        
         conn.on('open', () => {
-            alert("Успешно подключено к другу!");
-            initConnection();
+            alert("Подключено! Ты играешь за черных.");
+            setupComm();
         });
     }
 
-    function initConnection() {
+    function setupComm() {
         conn.on('data', d => {
             if(d.type === 'move') {
                 game.move(d.m);
