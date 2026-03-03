@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GIRI CHESS: PRO EDITION</title>
+    <title>GIRI CHESS: COMPLETE EDITION</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         :root { --gold: #ffd700; --bg: #0d0d0d; }
         body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; text-align: center; overflow-x: hidden; }
@@ -17,8 +17,9 @@
 
         #board-frame { width: 92vw; height: 92vw; max-width: 400px; max-height: 400px; margin: 20px auto; border: 4px solid #333; }
         #board { display: grid; grid-template-columns: repeat(8, 1fr); width: 100%; height: 100%; }
-        .cell { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+        .cell { display: flex; align-items: center; justify-content: center; }
         
+        /* ТЕМЫ */
         .t-classic .w { background: #eeeed2; } .t-classic .b { background: #769656; }
         .t-blood .w { background: #4a0000; } .t-blood .b { background: #1a0000; box-shadow: inset 0 0 15px #f00; }
         .t-purple .w { background: #2d004d; } .t-purple .b { background: #1a0029; box-shadow: inset 0 0 15px #8a2be2; }
@@ -26,13 +27,11 @@
         .piece { width: 90%; height: 90%; font-size: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; user-select: none; }
         .selected { background: rgba(255, 255, 0, 0.4) !important; outline: 3px solid var(--gold); }
 
-        .btn { background: var(--gold); color: #000; border: none; padding: 10px 18px; font-weight: bold; border-radius: 6px; cursor: pointer; margin: 5px; transition: 0.2s; }
-        .btn:active { transform: scale(0.95); }
-        
+        .btn { background: var(--gold); color: #000; border: none; padding: 10px 18px; font-weight: bold; border-radius: 6px; cursor: pointer; margin: 5px; }
         #storage { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 95%; max-width: 400px; background: #151515; border: 2px solid var(--gold); padding: 20px; z-index: 200; border-radius: 12px; max-height: 85vh; overflow-y: auto; box-sizing: border-box; }
         #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 150; }
         
-        .tab-btn { background: #333; color: #fff; padding: 10px; border: none; width: 50%; font-weight: bold; cursor: pointer; }
+        .tab-btn { background: #333; color: #fff; padding: 10px; border: none; width: 50%; font-weight: bold; }
         .tab-active { background: var(--gold); color: #000; }
 
         .item-row { background: #222; margin: 8px 0; padding: 10px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; border: 1px solid #333; font-size: 14px; }
@@ -42,8 +41,7 @@
         .ava-item { background: #222; padding: 10px; font-size: 24px; border-radius: 8px; cursor: pointer; border: 1px solid #444; }
         .ava-active { border-color: var(--gold); background: #2a2a10; }
 
-        input { background: #000; color: #fff; border: 1px solid #444; padding: 12px; width: 100%; border-radius: 6px; margin: 10px 0; box-sizing: border-box; outline: none; }
-        input:focus { border-color: var(--gold); }
+        input { background: #000; color: #fff; border: 1px solid #444; padding: 12px; width: 100%; border-radius: 6px; margin: 10px 0; box-sizing: border-box; }
     </style>
 </head>
 <body id="giri-app" class="t-classic">
@@ -59,9 +57,9 @@
 <div id="board-frame"><div id="board"></div></div>
 
 <div style="padding: 10px;">
-    <input type="text" id="target-id" placeholder="ID ДРУГА" style="max-width: 200px;">
+    <input type="text" id="target-id" placeholder="ID ДРУГА" style="max-width: 200px; display: inline-block;">
     <button class="btn" style="background:#00e676" onclick="connect()">В БОЙ</button>
-    <p style="font-size: 12px; color:#aaa;">ТВОЙ ID: <b id="my-id" style="color:var(--gold)">ГЕНЕРАЦИЯ...</b></p>
+    <p style="font-size: 11px; color:#aaa;">ТВОЙ ID: <b id="my-id" style="color:var(--gold)">ПОДКЛЮЧЕНИЕ...</b></p>
 </div>
 
 <div id="overlay" onclick="closeS()"></div>
@@ -72,22 +70,18 @@
     </div>
     
     <div id="sec-inv">
-        <div style="text-align:left; font-size:11px; color:var(--gold)">АВАТАРКИ:</div>
         <div class="ava-grid" id="inv-avas"></div>
-        <div style="text-align:left; font-size:11px; color:var(--gold); margin-top:10px;">ВЕЩИ:</div>
         <div id="inventory-list"></div>
     </div>
 
     <div id="sec-shop" style="display:none">
-        <div style="text-align:left; font-size:11px; color:var(--gold)">КУПИТЬ АВАТАР:</div>
         <div id="shop-avas" class="ava-grid"></div>
-        <div style="text-align:left; font-size:11px; color:var(--gold); margin-top:10px;">КУПИТЬ ТЕМЫ/СКИНЫ:</div>
         <div id="shop-list"></div>
     </div>
 
     <hr style="border:0; border-top:1px solid #333; margin:20px 0;">
     <input type="text" id="promo-input" placeholder="ПРОМОКОД...">
-    <button class="btn" style="width:100%" onclick="promo()">АКТИВИРОВАТЬ</button>
+    <button class="btn" style="width:100%" onclick="promo()">ОК</button>
     <button class="btn" style="width:100%; background:#444; color:#fff; margin-top:10px;" onclick="closeS()">ЗАКРЫТЬ</button>
 </div>
 
@@ -96,12 +90,11 @@
         't-classic': { n: 'Тема: Классика', p: 0, type: 't' },
         't-purple': { n: 'Тема: Неон', p: 500, type: 't' },
         't-blood': { n: 'Тема: Кровь', p: 1000, type: 't' },
-        's-default': { n: 'Скин: Дефолт', p: 0, type: 's' },
+        's-default': { n: 'Скин: Обычный', p: 0, type: 's' },
         's-giri': { n: 'Скин: ГИРИ 🪨', p: 800, type: 's' },
-        's-war': { n: 'Скин: Война 🚁', p: 1500, type: 's' }
+        's-war': { n: 'Скин: Техника 🚁', p: 1500, type: 's' }
     };
-
-    const AVAS = { '👤': 0, '🐱': 150, '👺': 250, '🥷': 400, '🤡': 2000 };
+    const AVAS = { '👤': 0, '🐱': 150, '👺': 250, '🥷': 400, '🤡': 1000 };
 
     let coins = parseInt(localStorage.getItem('g_c')) || 100;
     let elo = parseInt(localStorage.getItem('g_e')) || 1200;
@@ -113,30 +106,21 @@
     const game = new Chess();
     let conn, myColor = 'w', selectedSq = null;
 
-    // Настройка PeerJS
-    const peer = new Peer(undefined, {
-        host: '0.peerjs.com',
-        secure: true,
-        port: 443,
-        config: {'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }]}
-    });
+    const peer = new Peer(undefined, { host: '0.peerjs.com', port: 443, secure: true });
 
     peer.on('open', id => document.getElementById('my-id').innerText = id);
-    peer.on('error', () => document.getElementById('my-id').innerText = "ОФФЛАЙН (НУЖЕН HTTPS)");
-
     peer.on('connection', c => {
         conn = c; myColor = 'w';
-        alert("Противник в сети! Твой ход.");
-        conn.on('data', d => { if(d.type==='move'){ game.move(d.m); render(); checkWin(); }});
+        alert("Игрок вошел!");
+        conn.on('data', d => { if(d.type==='move'){ game.move(d.m); render(); }});
     });
 
     function connect() {
         const id = document.getElementById('target-id').value;
-        if(!id) return alert("Введи ID!");
+        if(!id) return;
         conn = peer.connect(id);
         myColor = 'b';
-        conn.on('open', () => alert("Подключено! Ожидай хода белых."));
-        conn.on('data', d => { if(d.type==='move'){ game.move(d.m); render(); checkWin(); }});
+        conn.on('data', d => { if(d.type==='move'){ game.move(d.m); render(); }});
     }
 
     function refresh() {
@@ -145,58 +129,45 @@
         document.getElementById('my-ava').childNodes[0].textContent = ava;
         document.getElementById('giri-app').className = theme;
 
-        const invAvas = document.getElementById('inv-avas');
-        const shopAvas = document.getElementById('shop-avas');
+        const invAvas = document.getElementById('inv-avas'), shopAvas = document.getElementById('shop-avas');
         invAvas.innerHTML = ''; shopAvas.innerHTML = '';
-        
         for(let a in AVAS) {
-            if(unlocked.includes(a)) {
-                invAvas.innerHTML += `<div class="ava-item ${ava===a?'ava-active':''}" onclick="setA('${a}')">${a}</div>`;
-            } else {
-                shopAvas.innerHTML += `<div class="ava-item" onclick="buyA('${a}')" style="font-size:10px;">${a}<br>${AVAS[a]}</div>`;
-            }
+            if(unlocked.includes(a)) invAvas.innerHTML += `<div class="ava-item ${ava===a?'ava-active':''}" onclick="setA('${a}')">${a}</div>`;
+            else shopAvas.innerHTML += `<div class="ava-item" onclick="buyA('${a}')">${a}<br><small>${AVAS[a]}</small></div>`;
         }
 
-        const invL = document.getElementById('inventory-list');
-        const shopL = document.getElementById('shop-list');
+        const invL = document.getElementById('inventory-list'), shopL = document.getElementById('shop-list');
         invL.innerHTML = ''; shopL.innerHTML = '';
-        
         for(let id in ITEMS) {
             const it = ITEMS[id];
             if(unlocked.includes(id)) {
-                const isUsed = (theme === id || skin === id);
-                invL.innerHTML += `<div class="item-row ${isUsed?'row-on':''}"><span>${it.n}</span><button class="btn" onclick="use('${id}')">${isUsed?'OK':'ВЗЯТЬ'}</button></div>`;
+                const active = (theme===id || skin===id);
+                invL.innerHTML += `<div class="item-row ${active?'row-on':''}"><span>${it.n}</span><button class="btn" onclick="use('${id}')">${active?'ОК':'ВЗЯТЬ'}</button></div>`;
             } else {
-                shopL.innerHTML += `<div class="item-row"><span>${it.n}</span><button class="btn" style="background:#2e7d32;color:#fff" onclick="buyT('${id}')">${it.p} 🪙</button></div>`;
+                shopL.innerHTML += `<div class="item-row"><span>${it.n}</span><button class="btn" onclick="buyT('${id}')">${it.p} 🪙</button></div>`;
             }
         }
-
-        localStorage.setItem('g_c', coins);
-        localStorage.setItem('g_u', JSON.stringify(unlocked));
-        localStorage.setItem('g_t', theme);
-        localStorage.setItem('g_s', skin);
-        localStorage.setItem('g_a', ava);
+        localStorage.setItem('g_c', coins); localStorage.setItem('g_u', JSON.stringify(unlocked));
+        localStorage.setItem('g_t', theme); localStorage.setItem('g_s', skin); localStorage.setItem('g_a', ava);
         render();
     }
 
     function promo() {
-        const val = document.getElementById('promo-input').value.trim().toUpperCase();
-        if(val === 'GIRI2026') { coins += 5000; alert("Читы активированы! +5000"); }
-        else if(val === 'FREE') { coins += 500; alert("Бонус +500 монет!"); }
-        else { alert("Код не найден"); }
-        document.getElementById('promo-input').value = '';
-        refresh();
+        const v = document.getElementById('promo-input').value.toUpperCase();
+        if(v === 'GIRI2026') { coins += 5000; alert("+5000!"); }
+        if(v === 'FREE') { coins += 500; alert("+500!"); }
+        document.getElementById('promo-input').value = ''; refresh();
     }
 
-    function buyA(a) { if(coins >= AVAS[a]){ coins -= AVAS[a]; unlocked.push(a); refresh(); } else alert("Мало монет!"); }
-    function buyT(id) { if(coins >= ITEMS[id].p){ coins -= ITEMS[id].p; unlocked.push(id); refresh(); } else alert("Мало монет!"); }
+    function buyA(a) { if(coins >= AVAS[a]){ coins -= AVAS[a]; unlocked.push(a); refresh(); } }
+    function buyT(id) { if(coins >= ITEMS[id].p){ coins -= ITEMS[id].p; unlocked.push(id); refresh(); } }
     function use(id) { if(ITEMS[id].type==='t') theme = id; else skin = id; refresh(); }
     function setA(a) { ava = a; refresh(); }
     function setTab(t) {
         document.getElementById('sec-inv').style.display = t==='inv'?'block':'none';
         document.getElementById('sec-shop').style.display = t==='shop'?'block':'none';
-        document.getElementById('t-inv').classList.toggle('tab-active', t==='inv');
-        document.getElementById('t-shop').classList.toggle('tab-active', t==='shop');
+        document.getElementById('t-inv').className = 'tab-btn '+(t==='inv'?'tab-active':'');
+        document.getElementById('t-shop').className = 'tab-btn '+(t==='shop'?'tab-active':'');
     }
 
     function render() {
@@ -220,7 +191,7 @@
                     if(selectedSq===sq) selectedSq = null;
                     else if(selectedSq) {
                         const m = game.move({from: selectedSq, to: sq, promotion: 'q'});
-                        if(m) { if(conn) conn.send({type:'move', m:m}); render(); checkWin(); }
+                        if(m && conn) conn.send({type:'move', m:m});
                         selectedSq = null;
                     } else {
                         const pc = game.get(sq); if(pc && pc.color===myColor) selectedSq = sq;
@@ -232,15 +203,8 @@
         });
     }
 
-    function checkWin() {
-        if(game.in_checkmate()) { 
-            alert("МАТ! +50 монет!"); coins += 50; elo += 20; refresh(); 
-        }
-    }
-
     function openS() { document.getElementById('storage').style.display='block'; document.getElementById('overlay').style.display='block'; refresh(); }
     function closeS() { document.getElementById('storage').style.display='none'; document.getElementById('overlay').style.display='none'; }
-
     refresh();
 </script>
 </body>
