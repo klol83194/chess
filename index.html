@@ -3,40 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GIRI CHESS: FIX CONNECTION</title>
+    <title>GIRI CHESS: FIREBASE EDITION</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         :root { --gold: #ffd700; --bg: #0d0d0d; --green: #00ff00; }
-        body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; text-align: center; overflow-x: hidden; }
+        body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; text-align: center; -webkit-user-select: none; }
         #top-bar { background: #1a1a1a; padding: 10px; border-bottom: 3px solid var(--gold); display: flex; justify-content: space-around; align-items: center; }
         .p-info { display: flex; align-items: center; gap: 8px; text-align: left; }
         .ava-box { width: 45px; height: 45px; border-radius: 50%; background: #222; border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 22px; }
-        #board-frame { width: 92vw; height: 92vw; max-width: 380px; max-height: 380px; margin: 15px auto; border: 3px solid #333; }
+        #board-frame { width: 92vw; height: 92vw; max-width: 380px; max-height: 380px; margin: 15px auto; border: 3px solid #333; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
         #board { display: grid; grid-template-columns: repeat(8, 1fr); width: 100%; height: 100%; }
-        .cell { display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; }
+        .cell { display: flex; align-items: center; justify-content: center; font-size: 32px; cursor: pointer; }
         .t-def .w { background: #eeeed2; } .t-def .b { background: #769656; }
         .t-purple .w { background: #2d004d; } .t-purple .b { background: #1a0029; }
         .t-blood .w { background: #4a0000; } .t-blood .b { background: #1a0000; }
-        .selected { outline: 3px solid var(--gold) inset; background: rgba(255,215,0,0.4) !important; }
-        .btn { background: var(--gold); color: #000; border: none; padding: 10px 15px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-        .btn:active { transform: scale(0.95); opacity: 0.8; }
-        #status-dot { width: 10px; height: 10px; background: #555; border-radius: 50%; display: inline-block; margin-right: 5px; }
-        #status-dot.online { background: var(--green); box-shadow: 0 0 8px var(--green); }
-        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 380px; background: #151515; border: 2px solid var(--gold); padding: 20px; z-index: 200; border-radius: 12px; }
+        .selected { outline: 4px solid var(--gold) inset; background: rgba(255,215,0,0.3) !important; }
+        .btn { background: var(--gold); color: #000; border: none; padding: 12px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .btn:active { transform: scale(0.95); }
+        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 380px; background: #151515; border: 2px solid var(--gold); padding: 20px; z-index: 200; border-radius: 12px; max-height: 80vh; overflow-y: auto; }
         #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 150; }
-        input { background: #000; color: #fff; border: 1px solid #444; padding: 12px; width: 100%; box-sizing: border-box; margin-bottom: 10px; border-radius: 5px; font-size: 14px; }
-        #my-id-box { background: #111; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 11px; word-break: break-all; margin-top: 5px; border: 1px dashed #444; cursor: pointer; color: var(--gold); }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0; }
+        .grid-item { background: #222; padding: 10px; border: 1px solid #444; border-radius: 8px; font-size: 20px; }
+        .grid-item.active { border-color: var(--gold); background: #2a2a00; }
+        input { background: #000; color: #fff; border: 1px solid #444; padding: 12px; width: 100%; box-sizing: border-box; margin-bottom: 10px; border-radius: 8px; }
+        .status { font-size: 10px; color: var(--green); margin-top: 5px; }
     </style>
 </head>
 <body class="t-def" id="app">
 
 <div id="top-bar">
     <div class="p-info">
-        <div class="ava-box" id="display-ava">👤</div>
-        <div><b id="display-coins">0</b> 🪙<br><small>🏆 <span id="display-elo">1200</span></small></div>
+        <div class="ava-box" id="disp-ava">👤</div>
+        <div><b id="disp-coins">0</b> 🪙<br><small>🏆 <span id="disp-elo">1200</span></small></div>
     </div>
-    <div><div id="status-dot"></div><small id="status-text">ПОИСК СЕТИ...</small></div>
     <button class="btn" onclick="openModal()">МЕНЮ</button>
 </div>
 
@@ -44,12 +45,15 @@
 
 <div style="padding: 10px;">
     <div style="display:flex; gap:5px; margin-bottom:10px;">
-        <button class="btn" style="flex:1; background:#4caf50" onclick="startBot(1)">БОТ 1</button>
-        <button class="btn" style="flex:1; background:#f44336" onclick="startBot(3)">БОТ 3</button>
+        <button class="btn" style="flex:1; background:#4caf50" onclick="startBot(1)">НУБ</button>
+        <button class="btn" style="flex:1; background:#f44336" onclick="startBot(3)">GIRI</button>
     </div>
-    <input type="text" id="opp-id" placeholder="Вставь ID друга">
-    <button class="btn" style="width:100%; margin-bottom:10px;" onclick="connectPvP()">ПОДКЛЮЧИТЬСЯ (PVP)</button>
-    <div id="my-id-box" onclick="copyId()">Твой ID (нажми): <span id="my-id">...</span></div>
+    <input type="text" id="game-id" placeholder="Код комнаты (напр. 777)">
+    <div style="display:flex; gap:5px;">
+        <button class="btn" style="flex:1" onclick="join(1)">СОЗДАТЬ</button>
+        <button class="btn" style="flex:1" onclick="join(2)">ЗАЙТИ</button>
+    </div>
+    <div class="status" id="net-status">СИСТЕМА ГОТОВА</div>
 </div>
 
 <div id="overlay" onclick="closeModal()"></div>
@@ -58,64 +62,55 @@
         <button class="btn" style="flex:1" onclick="setTab('inv')">СКЛАД</button>
         <button class="btn" style="flex:1" onclick="setTab('shop')">МАГАЗИН</button>
     </div>
-    <div id="sec-inv"><div class="grid" id="inv-avas"></div><div id="inv-items"></div></div>
-    <div id="sec-shop" style="display:none"><div class="grid" id="shop-avas"></div><div id="shop-items"></div></div>
-    <hr style="border:0; border-top:1px solid #333; margin: 15px 0;">
+    <div id="sec-inv">
+        <div class="grid" id="inv-avas"></div>
+        <div id="inv-items"></div>
+    </div>
+    <div id="sec-shop" style="display:none">
+        <div class="grid" id="shop-avas"></div>
+        <div id="shop-items"></div>
+    </div>
+    <hr style="border:0; border-top:1px solid #333; margin:15px 0;">
     <input type="text" id="promo-in" placeholder="ПРОМОКОД">
-    <button class="btn" style="width:100%" onclick="usePromo()">OK</button>
+    <button class="btn" style="width:100%" onclick="usePromo()">АКТИВИРОВАТЬ</button>
 </div>
 
 <script>
+    // Инициализация Firebase (Публичная БД для тестов)
+    const fb = firebase.initializeApp({ databaseURL: "https://giri-chess-default-rtdb.firebaseio.com" });
+    const db = fb.database();
+
+    const SHOP = {
+        't-purple': { n: 'Неон', p: 500, type: 't' },
+        't-blood': { n: 'Кровь', p: 800, type: 't' },
+        's-giri': { n: 'Гири 🪨', p: 1000, type: 's' }
+    };
     const AVATARS = { '👤':0, '🐱':100, '👺':300, '🥷':500, '🤡':1000 };
-    const SHOP = { 't-purple':{n:'Неон',p:500,type:'t'}, 't-blood':{n:'Кровь',p:800,type:'t'}, 's-giri':{n:'Гири',p:1000,type:'s'} };
-    
-    let coins = parseInt(localStorage.getItem('g_c')) || 100, elo = parseInt(localStorage.getItem('g_elo')) || 1200;
-    let unlocked = JSON.parse(localStorage.getItem('g_u')) || ['👤', 't-def', 's-def'], curAva = localStorage.getItem('g_a') || '👤';
-    let curTheme = localStorage.getItem('g_t') || 't-def', curSkin = localStorage.getItem('g_s') || 's-def';
+
+    let coins = parseInt(localStorage.getItem('g_c')) || 100;
+    let elo = parseInt(localStorage.getItem('g_elo')) || 1200;
+    let unlocked = JSON.parse(localStorage.getItem('g_u')) || ['👤', 't-def', 's-def'];
+    let curAva = localStorage.getItem('g_a') || '👤', curTheme = localStorage.getItem('g_t') || 't-def', curSkin = localStorage.getItem('g_s') || 's-def';
 
     const game = new Chess();
-    let conn, myColor = 'w', lastSq = null, botLvl = 0;
+    let myColor = null, roomId = null, lastSq = null, botLvl = 0;
 
-    const savedId = localStorage.getItem('g_peer_id');
-    const peer = new Peer(savedId, { 
-        host: '0.peerjs.com', port: 443, secure: true,
-        config: { 'iceServers': [{ urls: 'stun:stun.l.google.com:19302' }] } 
-    });
+    function join(mode) {
+        const id = document.getElementById('game-id').value.trim();
+        if(!id) return alert("Введите код!");
+        roomId = id; botLvl = 0;
+        myColor = (mode === 1) ? 'w' : 'b';
+        
+        if(mode === 1) db.ref('games/'+roomId).set({ f: game.fen(), t: Date.now() });
 
-    peer.on('open', id => { 
-        localStorage.setItem('g_peer_id', id); 
-        document.getElementById('my-id').innerText = id;
-        document.getElementById('status-text').innerText = 'ГОТОВ';
-    });
-
-    // Когда К НАМ подключаются
-    peer.on('connection', c => {
-        conn = c; myColor = 'w'; botLvl = 0;
-        bindEvents();
-        alert("Игрок вошел! Твой ход.");
-    });
-
-    function connectPvP() {
-        const tid = document.getElementById('opp-id').value.trim();
-        if(!tid) return alert("Введите ID!");
-        conn = peer.connect(tid, { reliable: true });
-        myColor = 'b'; botLvl = 0;
-        bindEvents();
-    }
-
-    function bindEvents() {
-        conn.on('open', () => {
-            document.getElementById('status-dot').className = 'online';
-            document.getElementById('status-text').innerText = 'В СЕТИ';
-            if(myColor === 'b') alert("Подключено! Ожидай ход белых.");
+        db.ref('games/'+roomId).on('value', s => {
+            const d = s.val();
+            if(d && d.f !== game.fen()) {
+                game.load(d.f); render(); checkEnd();
+            }
         });
-        conn.on('data', d => {
-            if(d.m) { game.move(d.m); render(); checkEnd(); }
-        });
-        conn.on('close', () => {
-            document.getElementById('status-dot').className = '';
-            document.getElementById('status-text').innerText = 'ОФФЛАЙН';
-        });
+        document.getElementById('net-status').innerText = "В КОМНАТЕ: " + roomId + " (" + (myColor==='w'?'БЕЛЫЕ':'ЧЕРНЫЕ') + ")";
+        render();
     }
 
     function render() {
@@ -134,13 +129,13 @@
                     cell.appendChild(pc);
                 }
                 cell.onclick = () => {
-                    if(game.turn() !== myColor || game.game_over()) return;
+                    if((roomId && game.turn() !== myColor) || game.game_over()) return;
                     if(lastSq) {
                         const m = game.move({from: lastSq, to: sq, promotion: 'q'});
                         if(m) {
-                            if(conn && conn.open) conn.send({m: m.san});
+                            if(roomId) db.ref('games/'+roomId).update({ f: game.fen() });
                             lastSq = null; render(); checkEnd();
-                            if(botLvl > 0) setTimeout(botDo, 600);
+                            if(botLvl > 0) setTimeout(botMove, 600);
                         } else lastSq = sq;
                     } else lastSq = sq;
                     render();
@@ -150,35 +145,58 @@
         });
     }
 
-    function botDo() {
-        const m = game.moves(); if(!m.length) return;
-        game.move(botLvl===1 ? m[Math.floor(Math.random()*m.length)] : m.sort((a,b)=>b.includes('x')?1:-1)[0]);
+    function botMove() {
+        const moves = game.moves();
+        if(!moves.length) return;
+        game.move(botLvl === 1 ? moves[Math.floor(Math.random()*moves.length)] : moves.sort((a,b)=>b.includes('x')?1:-1)[0]);
         render(); checkEnd();
     }
 
     function checkEnd() {
         if(game.game_over()) {
             let res = game.in_draw() ? 0.5 : (game.turn() !== myColor ? 1 : 0);
-            elo += Math.round(30 * (res - 0.5)); if(res===1) coins += 50;
-            alert("Конец! ЭЛО: " + elo); sync();
+            elo += Math.round(30 * (res - 0.5));
+            if(res === 1) coins += 50;
+            alert("Игра окончена! Рейтинг: " + elo);
+            if(roomId) db.ref('games/'+roomId).remove();
+            sync();
         }
     }
 
-    function startBot(l) { botLvl=l; myColor='w'; game.reset(); render(); }
-    function copyId() { navigator.clipboard.writeText(document.getElementById('my-id').innerText); alert("ID скопирован!"); }
-    function setTab(t) { document.getElementById('sec-inv').style.display = t==='inv'?'block':'none'; document.getElementById('sec-shop').style.display = t==='shop'?'block':'none'; }
     function sync() {
-        document.getElementById('display-coins').innerText = coins;
-        document.getElementById('display-elo').innerText = elo;
-        document.getElementById('display-ava').innerText = curAva;
+        document.getElementById('disp-coins').innerText = coins;
+        document.getElementById('disp-elo').innerText = elo;
+        document.getElementById('disp-ava').innerText = curAva;
+        
+        const iA = document.getElementById('inv-avas'), sA = document.getElementById('shop-avas');
+        iA.innerHTML = ''; sA.innerHTML = '';
+        for(let a in AVATARS) {
+            if(unlocked.includes(a)) iA.innerHTML += `<div class="grid-item ${curAva===a?'active':''}" onclick="curAva='${a}';sync()">${a}</div>`;
+            else sA.innerHTML += `<div class="grid-item" onclick="if(coins>=AVATARS['${a}']){coins-=AVATARS['${a}'];unlocked.push('${a}');sync()}">${a}<br><small>${AVATARS[a]}</small></div>`;
+        }
+        
+        const iI = document.getElementById('inv-items'), sI = document.getElementById('shop-items');
+        iI.innerHTML = ''; sI.innerHTML = '';
+        for(let id in SHOP) {
+            if(unlocked.includes(id)) iI.innerHTML += `<div style="display:flex;justify-content:space-between;padding:10px;background:#222;margin-top:5px;border-radius:8px;">${SHOP[id].n} <button class="btn" onclick="use('${id}')">ВЗЯТЬ</button></div>`;
+            else sI.innerHTML += `<div style="display:flex;justify-content:space-between;padding:10px;background:#222;margin-top:5px;border-radius:8px;">${SHOP[id].n} <button class="btn" onclick="buy('${id}')">${SHOP[id].p}🪙</button></div>`;
+        }
+        
         localStorage.setItem('g_c', coins); localStorage.setItem('g_elo', elo);
         localStorage.setItem('g_u', JSON.stringify(unlocked)); localStorage.setItem('g_a', curAva);
         localStorage.setItem('g_t', curTheme); localStorage.setItem('g_s', curSkin);
+        render();
     }
-    function usePromo() { let v = document.getElementById('promo-in').value.toUpperCase(); if(v==='GIRI') coins+=1000; sync(); document.getElementById('promo-in').value=''; }
+
+    function buy(id) { if(coins >= SHOP[id].p) { coins -= SHOP[id].p; unlocked.push(id); sync(); } }
+    function use(id) { if(SHOP[id].type === 's') curSkin = id; else curTheme = id; sync(); }
+    function startBot(l) { botLvl = l; roomId = null; myColor = 'w'; game.reset(); render(); }
+    function usePromo() { if(document.getElementById('promo-in').value.toUpperCase()==='GIRI') coins+=1000; sync(); }
     function openModal() { document.getElementById('modal').style.display='block'; document.getElementById('overlay').style.display='block'; sync(); }
     function closeModal() { document.getElementById('modal').style.display='none'; document.getElementById('overlay').style.display='none'; }
-    sync(); render();
+    function setTab(t) { document.getElementById('sec-inv').style.display = t==='inv'?'block':'none'; document.getElementById('sec-shop').style.display = t==='shop'?'block':'none'; }
+
+    sync();
 </script>
 </body>
 </html>
