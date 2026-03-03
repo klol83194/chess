@@ -8,39 +8,30 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --gold: #ffd700; --bg: #0d0d0d; --green: #00ff00; }
-        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; text-align: center; overflow: hidden; -webkit-user-select: none; }
-        
-        /* Шапка */
+        :root { --gold: #ffd700; --bg: #0d0d0d; }
+        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; text-align: center; overflow-x: hidden; -webkit-user-select: none; }
         #top-bar { background: #1a1a1a; padding: 10px; border-bottom: 3px solid var(--gold); display: flex; justify-content: space-around; align-items: center; }
         .p-info { display: flex; align-items: center; gap: 8px; text-align: left; }
-        .ava-box { width: 45px; height: 45px; border-radius: 50%; background: #222; border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 24px; }
-        
-        /* Доска */
-        #board-frame { width: 94vw; height: 94vw; max-width: 380px; max-height: 380px; margin: 15px auto; border: 3px solid #333; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .ava-box { width: 42px; height: 42px; border-radius: 50%; background: #222; border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 22px; }
+        .captured { height: 25px; display: flex; justify-content: center; gap: 2px; font-size: 18px; color: rgba(255,255,255,0.5); margin: 2px 0; }
+        #board-frame { width: 92vw; max-width: 360px; aspect-ratio: 1/1; margin: 5px auto; border: 4px solid #333; }
         #board { display: grid; grid-template-columns: repeat(8, 1fr); width: 100%; height: 100%; }
-        .cell { display: flex; align-items: center; justify-content: center; font-size: 32px; cursor: pointer; }
-        
-        /* Темы оформления */
-        .t-def .w { background: #eeeed2; } .t-def .b { background: #769656; }
-        .t-purple .w { background: #2d004d; } .t-purple .b { background: #1a0029; }
-        .t-blood .w { background: #4a0000; } .t-blood .b { background: #1a0000; }
-        
-        .selected { background: rgba(255, 215, 0, 0.6) !important; box-shadow: inset 0 0 10px #000; }
-        .btn { background: var(--gold); color: #000; border: none; padding: 10px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-        .btn:active { transform: scale(0.95); }
-        
-        /* Меню и Магазин */
-        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 380px; background: #151515; border: 2px solid var(--gold); padding: 20px; z-index: 200; border-radius: 12px; max-height: 80vh; overflow-y: auto; }
+        .cell { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 35px; cursor: pointer; }
+        .t-def .w { background: #f0d9b5; } .t-def .b { background: #b58863; }
+        .t-purple .w { background: #4d008c; } .t-purple .b { background: #1a0029; }
+        .t-blood .w { background: #8a0000; } .t-blood .b { background: #300000; }
+        .t-emerald .w { background: #adbb9a; } .t-emerald .b { background: #4e7837; }
+        .t-cyber .w { background: #00ecff; } .t-cyber .b { background: #00374a; }
+        .selected { background: rgba(255, 215, 0, 0.7) !important; }
+        .btn { background: var(--gold); color: #000; border: none; padding: 8px; font-weight: bold; border-radius: 8px; cursor: pointer; }
+        #chat-box { width: 90vw; max-width: 360px; margin: 5px auto; height: 60px; background: #111; border: 1px solid #333; overflow-y: auto; text-align: left; padding: 5px; font-size: 12px; }
+        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 92%; max-width: 380px; background: #151515; border: 2px solid var(--gold); padding: 15px; z-index: 200; border-radius: 12px; max-height: 85vh; overflow-y: auto; }
         #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 150; }
-        
-        input { background: #000; color: #fff; border: 1px solid #444; padding: 12px; width: 100%; box-sizing: border-box; margin-bottom: 10px; border-radius: 8px; }
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0; }
-        .grid-item { background: #222; padding: 10px; border: 1px solid #444; border-radius: 8px; font-size: 20px; position: relative; }
+        input { background: #000; color: #fff; border: 1px solid #444; padding: 8px; width: 100%; box-sizing: border-box; margin-bottom: 5px; border-radius: 8px; }
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 10px; }
+        .grid-item { background: #222; padding: 5px; border: 1px solid #444; border-radius: 5px; font-size: 18px; }
         .grid-item.active { border-color: var(--gold); background: #332b00; }
-        .price { font-size: 10px; display: block; color: var(--gold); }
-        
-        #turn-status { font-size: 12px; font-weight: bold; color: var(--gold); }
+        .shop-item { display:flex; justify-content:space-between; align-items:center; background:#222; padding:8px; margin-bottom:5px; border-radius:8px; font-size:13px; }
     </style>
 </head>
 <body class="t-def" id="app">
@@ -54,101 +45,135 @@
     <button class="btn" onclick="openM()">МЕНЮ</button>
 </div>
 
+<div id="cap-top" class="captured"></div>
 <div id="board-frame"><div id="board"></div></div>
+<div id="cap-bot" class="captured"></div>
+<div id="chat-box"></div>
 
-<div style="padding: 0 10px;">
-    <input type="text" id="room-id" placeholder="Код комнаты (напр. 777)">
-    <div style="display:flex; gap:5px; margin-bottom:10px;">
-        <button class="btn" style="flex:1" onclick="join(1)">СОЗДАТЬ</button>
-        <button class="btn" style="flex:1" onclick="join(2)">ЗАЙТИ</button>
+<div style="padding: 5px 10px;">
+    <div id="online-controls">
+        <input type="text" id="room-id" placeholder="Код комнаты">
+        <div style="display:flex; gap:5px;">
+            <button class="btn" style="flex:1" onclick="join(1)">СОЗДАТЬ</button>
+            <button class="btn" style="flex:1" onclick="join(2)">ЗАЙТИ</button>
+        </div>
     </div>
-    <div style="display:flex; gap:5px;">
-        <button class="btn" style="flex:1; background:#4caf50" onclick="startBot(1)">БОТ: НУБ</button>
-        <button class="btn" style="flex:1; background:#f44336" onclick="startBot(3)">БОТ: GIRI</button>
+    <div id="game-controls" style="display:none; display:flex; gap:5px;">
+        <input type="text" id="msg-input" placeholder="Чат..." onkeypress="if(event.key==='Enter') sendMsg()" style="flex:3">
+        <button class="btn" style="background:#f44336; flex:1" onclick="resign()">🏳️</button>
     </div>
 </div>
 
 <div id="overlay" onclick="closeM()"></div>
 <div id="modal">
-    <div style="display:flex; gap:5px; margin-bottom:15px;">
-        <button class="btn" style="flex:1" onclick="setTab('inv')">ИНВЕНТАРЬ</button>
-        <button class="btn" style="flex:1" onclick="setTab('shop')">МАГАЗИН</button>
+    <h4 style="margin:0 0 10px 0; color:var(--gold)">АВАТАРКИ</h4>
+    <div class="grid" id="menu-avas"></div>
+    <h4 style="margin:10px 0; color:var(--gold)">МАГАЗИН И ТЕМЫ</h4>
+    <div id="menu-items"></div>
+    <div style="margin-top:15px; border-top:1px solid #333; padding-top:10px;">
+        <input type="text" id="promo-input" placeholder="ПРОМОКОД">
+        <button class="btn" style="width:100%" onclick="usePromo()">АКТИВИРОВАТЬ</button>
     </div>
-    
-    <div id="sec-inv">
-        <p><small>АВАТАРКИ:</small></p>
-        <div class="grid" id="inv-avas"></div>
-        <p><small>ТЕМЫ И СКИНЫ:</small></p>
-        <div id="inv-items"></div>
-    </div>
-
-    <div id="sec-shop" style="display:none">
-        <p><small>КУПИТЬ АВАТАР:</small></p>
-        <div class="grid" id="shop-avas"></div>
-        <p><small>КУПИТЬ ОФОРМЛЕНИЕ:</small></p>
-        <div id="shop-items"></div>
-    </div>
-
-    <hr style="border:0; border-top:1px solid #333; margin:15px 0;">
-    <input type="text" id="promo" placeholder="ПРОМОКОД">
-    <button class="btn" style="width:100%" onclick="usePromo()">ОК</button>
+    <button class="btn" style="width:100%; margin-top:10px; background:#444; color:#fff" onclick="closeM()">ЗАКРЫТЬ</button>
 </div>
 
 <script>
-    // Инициализация Firebase
     const fb = firebase.initializeApp({ databaseURL: "https://mychess-18329-default-rtdb.europe-west1.firebasedatabase.app" });
     const db = fb.database();
-
     const game = new Chess();
-    let myColor = 'w', roomId = null, botLvl = 0, lastSq = null;
+    let myColor = 'w', roomId = null, lastSq = null, gameEnded = false;
 
-    // Данные магазина
     const AVATARS = { '👤':0, '🐱':100, '👺':300, '🥷':500, '🤡':1000 };
     const ITEMS = {
-        't-purple': { n: 'Фиолетовый Неон', p: 500, type: 't' },
-        't-blood': { n: 'Кровавая Луна', p: 800, type: 't' },
+        't-def': { n: 'Классика', p: 0, type: 't' },
+        't-purple': { n: 'Фиолет', p: 400, type: 't' },
+        't-blood': { n: 'Кровь', p: 400, type: 't' },
+        't-emerald': { n: 'Изумруд', p: 400, type: 't' },
+        't-cyber': { n: 'Кибер', p: 400, type: 't' },
         's-giri': { n: 'Скин: ГИРИ 🪨', p: 1000, type: 's' }
     };
 
-    // Загрузка сохранений
     let coins = parseInt(localStorage.getItem('g_c')) || 100;
     let elo = parseInt(localStorage.getItem('g_elo')) || 1200;
-    let unlocked = JSON.parse(localStorage.getItem('g_u')) || ['👤', 't-def', 's-def'];
+    let unlocked = JSON.parse(localStorage.getItem('g_u')) || ['👤', 't-def'];
     let curAva = localStorage.getItem('g_a') || '👤';
     let curTheme = localStorage.getItem('g_t') || 't-def';
     let curSkin = localStorage.getItem('g_s') || 's-def';
 
     function join(mode) {
         const id = document.getElementById('room-id').value.trim();
-        if(!id) return alert("Введите код!");
-        roomId = id; botLvl = 0;
-        myColor = (mode === 1) ? 'w' : 'b';
-        game.reset();
+        if(!id) return;
+        roomId = id; myColor = (mode === 1) ? 'w' : 'b';
+        game.reset(); gameEnded = false;
+        document.getElementById('online-controls').style.display = 'none';
+        document.getElementById('game-controls').style.display = 'flex';
 
-        if(mode === 1) db.ref('games/'+roomId).set({ f: game.fen() });
-
+        if(mode === 1) db.ref('games/'+roomId).set({ f: game.fen(), turn: 'w' });
+        
         db.ref('games/'+roomId).on('value', s => {
             const data = s.val();
-            if(data && data.f !== game.fen()) {
+            if(!data) return;
+            if(data.f.startsWith('win_')) {
+                const winner = data.f.split('_')[1];
+                endGame(winner === myColor);
+                return;
+            }
+            if(data.f !== game.fen()) {
                 game.load(data.f);
+                if(game.game_over()) checkGameOver();
                 render();
             }
         });
-        alert(mode === 1 ? "Ждем хода друга!" : "Вы зашли за ЧЕРНЫХ!");
+
+        db.ref('chats/'+roomId).on('child_added', s => {
+            const m = s.val();
+            document.getElementById('chat-box').innerHTML += `<div><b>${m.a}:</b> ${m.t}</div>`;
+            document.getElementById('chat-box').scrollTop = 999;
+        });
         render();
+    }
+
+    function checkGameOver() {
+        if(gameEnded) return;
+        if(game.in_checkmate()) {
+            const winner = game.turn() === 'w' ? 'b' : 'w';
+            db.ref('games/'+roomId).update({ f: 'win_' + winner });
+        } else if(game.in_draw() || game.in_stalemate() || game.in_threefold_repetition()) {
+            alert("Ничья!");
+            location.reload();
+        }
+    }
+
+    function endGame(isWin) {
+        if(gameEnded) return;
+        gameEnded = true;
+        if(isWin) { elo += 25; coins += 50; alert("ПОБЕДА! +25 Эло, +50 монет"); }
+        else { elo -= 25; alert("ПОРАЖЕНИЕ! -25 Эло"); }
+        save();
+        setTimeout(() => location.reload(), 2000);
+    }
+
+    function resign() { 
+        if(confirm("Сдаться?")) {
+            const winner = myColor === 'w' ? 'b' : 'w';
+            db.ref('games/'+roomId).update({ f: 'win_' + winner });
+        }
+    }
+
+    function sendMsg() {
+        const i = document.getElementById('msg-input');
+        if(!i.value || !roomId) return;
+        db.ref('chats/'+roomId).push({ a: curAva, t: i.value });
+        i.value = '';
     }
 
     function render() {
         const boardEl = document.getElementById('board');
         boardEl.innerHTML = '';
         document.getElementById('app').className = curTheme;
-        
-        const turn = game.turn() === 'w' ? "ХОД БЕЛЫХ" : "ХОД ЧЕРНЫХ";
-        document.getElementById('turn-status').innerText = roomId ? `${turn} (${myColor==='w'?'ВЫ БЕЛЫЕ':'ВЫ ЧЕРНЫЕ'})` : turn;
-
+        updateCaptured();
         let rows = [0,1,2,3,4,5,6,7], cols = [0,1,2,3,4,5,6,7];
         if (myColor === 'b') { rows.reverse(); cols.reverse(); }
-
         const boardArr = game.board();
         rows.forEach(r => {
             cols.forEach(c => {
@@ -156,30 +181,23 @@
                 const sq = String.fromCharCode(97+c)+(8-r);
                 const cell = document.createElement('div');
                 cell.className = `cell ${(r+c)%2===0?'w':'b'} ${lastSq===sq?'selected':''}`;
-
                 if(p) {
                     const pc = document.createElement('div');
-                    pc.style.color = p.color === 'w' ? '#fff' : '#000';
-                    if(curSkin === 's-giri') {
-                        pc.innerText = {p:'🪨',r:'📦',n:'🏋️',b:'🔔',q:'🏆',k:'💪'}[p.type];
-                    } else {
-                        pc.innerText = {p:'♟',r:'♜',n:'♞',b:'♝',q:'♛',k:'♚',P:'♙',R:'♖',N:'♘',B:'♗',Q:'♕',K:'♔'}[p.color==='w'?p.type.toUpperCase():p.type];
-                    }
+                    pc.style.color = p.color === 'w' ? '#fff' : '#111';
+                    if(p.color === 'w') pc.style.textShadow = "0 0 2px #000";
+                    pc.innerText = (curSkin === 's-giri') ? {p:'🪨',r:'📦',n:'🏋️',b:'🔔',q:'🏆',k:'💪'}[p.type] : {p:'♟',r:'♜',n:'♞',b:'♝',q:'♛',k:'♚'}[p.type];
                     cell.appendChild(pc);
                 }
-
                 cell.onclick = () => {
                     if(game.game_over() || (roomId && game.turn() !== myColor)) return;
                     if(lastSq) {
-                        const m = game.move({from: lastSq, to: sq, promotion: 'q'});
-                        if(m) {
-                            if(roomId) db.ref('games/'+roomId).update({ f: game.fen() });
+                        if(game.move({from: lastSq, to: sq, promotion: 'q'})) {
+                            db.ref('games/'+roomId).update({ f: game.fen() });
                             lastSq = null;
-                            if(botLvl > 0) setTimeout(botMove, 600);
+                            if(game.game_over()) checkGameOver();
                         } else {
                             const piece = game.get(sq);
                             if(piece && piece.color === game.turn()) lastSq = sq;
-                            else lastSq = null;
                         }
                     } else {
                         const piece = game.get(sq);
@@ -192,53 +210,61 @@
         });
     }
 
-    function botMove() {
-        const m = game.moves(); if(!m.length) return;
-        game.move(botLvl===1 ? m[Math.floor(Math.random()*m.length)] : m.sort((a,b)=>b.includes('x')?1:-1)[0]);
-        render();
+    function updateCaptured() {
+        const history = game.history({verbose: true});
+        const capW = [], capB = [];
+        history.forEach(m => {
+            if(m.captured) {
+                const char = {p:'♟', r:'♜', n:'♞', b:'♝', q:'♛'}[m.captured];
+                if(m.color === 'w') capB.push(char); else capW.push(char);
+            }
+        });
+        document.getElementById('cap-top').innerText = myColor === 'w' ? capB.join('') : capW.join('');
+        document.getElementById('cap-bot').innerText = myColor === 'w' ? capW.join('') : capB.join('');
     }
 
-    function startBot(l) { botLvl=l; roomId=null; myColor='w'; game.reset(); render(); }
-
-    function sync() {
-        document.getElementById('disp-coins').innerText = coins;
-        document.getElementById('disp-elo').innerText = "🏆 " + elo;
-        document.getElementById('disp-ava').innerText = curAva;
-
-        // Отрисовка инвентаря и магазина
-        const invA = document.getElementById('inv-avas'), shopA = document.getElementById('shop-avas');
-        const invI = document.getElementById('inv-items'), shopI = document.getElementById('shop-items');
-        invA.innerHTML = ''; shopA.innerHTML = ''; invI.innerHTML = ''; shopI.innerHTML = '';
-
+    function openM() {
+        const avaG = document.getElementById('menu-avas'), itemG = document.getElementById('menu-items');
+        avaG.innerHTML = ''; itemG.innerHTML = '';
         for(let a in AVATARS) {
-            if(unlocked.includes(a)) invA.innerHTML += `<div class="grid-item ${curAva===a?'active':''}" onclick="buyAva('${a}')">${a}</div>`;
-            else shopA.innerHTML += `<div class="grid-item" onclick="buyAva('${a}')">${a}<span class="price">${AVATARS[a]}</span></div>`;
+            const isU = unlocked.includes(a);
+            avaG.innerHTML += `<div class="grid-item ${curAva===a?'active':''}" onclick="buyA('${a}')">${a}${isU?'':'<br><small style="font-size:8px">'+AVATARS[a]+'</small>'}</div>`;
         }
-
         for(let id in ITEMS) {
-            if(unlocked.includes(id)) invI.innerHTML += `<div style="display:flex;justify-content:space-between;padding:10px;background:#222;margin-bottom:5px;border-radius:8px;">${ITEMS[id].n} <button class="btn" onclick="useItem('${id}')">ВЗЯТЬ</button></div>`;
-            else shopI.innerHTML += `<div style="display:flex;justify-content:space-between;padding:10px;background:#222;margin-bottom:5px;border-radius:8px;">${ITEMS[id].n} <button class="btn" onclick="buyItem('${id}')">${ITEMS[id].p} 🪙</button></div>`;
+            const isU = unlocked.includes(id);
+            itemG.innerHTML += `<div class="shop-item"><span>${ITEMS[id].n}</span> <button class="btn" onclick="buyI('${id}')">${isU?'ВЗЯТЬ':ITEMS[id].p+'🪙'}</button></div>`;
         }
-
-        localStorage.setItem('g_c', coins); localStorage.setItem('g_u', JSON.stringify(unlocked));
-        localStorage.setItem('g_a', curAva); localStorage.setItem('g_t', curTheme); localStorage.setItem('g_s', curSkin);
-        render();
+        document.getElementById('modal').style.display='block';
+        document.getElementById('overlay').style.display='block';
     }
 
-    function buyAva(a) {
+    function buyA(a) {
         if(unlocked.includes(a)) curAva = a;
         else if(coins >= AVATARS[a]) { coins -= AVATARS[a]; unlocked.push(a); curAva = a; }
-        sync();
+        save(); openM();
     }
-    function buyItem(id) { if(coins >= ITEMS[id].p) { coins -= ITEMS[id].p; unlocked.push(id); sync(); } }
-    function useItem(id) { if(ITEMS[id].type === 's') curSkin = id; else curTheme = id; sync(); }
-    function usePromo() { if(document.getElementById('promo').value.toUpperCase() === 'GIRI') coins += 1000; sync(); document.getElementById('promo').value=''; }
-    
-    function openM() { document.getElementById('modal').style.display='block'; document.getElementById('overlay').style.display='block'; sync(); }
+    function buyI(id) {
+        if(unlocked.includes(id)) { if(ITEMS[id].type==='s') curSkin=id; else curTheme=id; }
+        else if(coins >= ITEMS[id].p) { coins -= ITEMS[id].p; unlocked.push(id); }
+        save(); openM();
+    }
+    function usePromo() {
+        const p = document.getElementById('promo-input').value.toUpperCase();
+        if(p === 'GIRI') { coins += 1000; alert("+1000 монет!"); }
+        document.getElementById('promo-input').value = ''; save(); openM();
+    }
     function closeM() { document.getElementById('modal').style.display='none'; document.getElementById('overlay').style.display='none'; }
-    function setTab(t) { document.getElementById('sec-inv').style.display = t==='inv'?'block':'none'; document.getElementById('sec-shop').style.display = t==='shop'?'block':'none'; }
-
-    sync();
+    
+    function save() {
+        localStorage.setItem('g_c', coins); localStorage.setItem('g_u', JSON.stringify(unlocked));
+        localStorage.setItem('g_a', curAva); localStorage.setItem('g_t', curTheme); 
+        localStorage.setItem('g_s', curSkin); localStorage.setItem('g_elo', elo);
+        document.getElementById('disp-coins').innerText = coins; 
+        document.getElementById('disp-ava').innerText = curAva;
+        document.getElementById('disp-elo').innerText = "🏆 " + elo;
+        render();
+    }
+    save();
 </script>
 </body>
 </html>
