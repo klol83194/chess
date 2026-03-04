@@ -8,98 +8,148 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --gold: #ffd700; --bg: #0d0d0d; }
+        :root { --gold: #ffd700; --bg: #0d0d0d; --red: #ff0000; }
         body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; text-align: center; overflow-x: hidden; -webkit-user-select: none; }
-        #top-bar { background: #1a1a1a; padding: 10px; border-bottom: 3px solid var(--gold); display: flex; justify-content: space-around; align-items: center; }
+        
+        /* UI Элементы */
+        #top-bar { background: #1a1a1a; padding: 5px; border-bottom: 2px solid var(--gold); display: flex; justify-content: space-around; align-items: center; height: 50px; }
         .p-info { display: flex; align-items: center; gap: 8px; text-align: left; }
-        .ava-box { width: 42px; height: 42px; border-radius: 50%; background: #222; border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 22px; }
-        .captured { height: 25px; display: flex; justify-content: center; gap: 2px; font-size: 18px; color: rgba(255,255,255,0.5); margin: 2px 0; }
-        #board-frame { width: 92vw; max-width: 360px; aspect-ratio: 1/1; margin: 5px auto; border: 4px solid #333; }
-        #board { display: grid; grid-template-columns: repeat(8, 1fr); width: 100%; height: 100%; }
-        .cell { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 35px; cursor: pointer; }
+        .ava-box { width: 35px; height: 35px; border-radius: 50%; background: #222; border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+        .captured { height: 25px; display: flex; justify-content: center; gap: 2px; font-size: 16px; color: rgba(255,255,255,0.6); margin: 5px 0; min-height: 25px; }
+        
+        /* Доска (ФИКС СЖАТИЯ) */
+        #board-frame { width: 92vw; max-width: 360px; aspect-ratio: 1/1; margin: 0 auto; border: 4px solid #333; box-sizing: border-box; }
+        #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); width: 100%; height: 100%; }
+        .cell { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; transition: background 0.2s; }
+        
+        /* Темы */
         .t-def .w { background: #f0d9b5; } .t-def .b { background: #b58863; }
         .t-purple .w { background: #4d008c; } .t-purple .b { background: #1a0029; }
         .t-blood .w { background: #8a0000; } .t-blood .b { background: #300000; }
-        .t-emerald .w { background: #adbb9a; } .t-emerald .b { background: #4e7837; }
         .t-cyber .w { background: #00ecff; } .t-cyber .b { background: #00374a; }
-        .selected { background: rgba(255, 215, 0, 0.7) !important; }
-        .btn { background: var(--gold); color: #000; border: none; padding: 8px; font-weight: bold; border-radius: 8px; cursor: pointer; }
-        #chat-box { width: 90vw; max-width: 360px; margin: 5px auto; height: 60px; background: #111; border: 1px solid #333; overflow-y: auto; text-align: left; padding: 5px; font-size: 12px; }
-        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 92%; max-width: 380px; background: #151515; border: 2px solid var(--gold); padding: 15px; z-index: 200; border-radius: 12px; max-height: 85vh; overflow-y: auto; }
+        .selected { background: rgba(255, 215, 0, 0.6) !important; }
+
+        /* Кнопки и Инпуты */
+        .btn { background: linear-gradient(145deg, #ffd700, #b8860b); color: #000; border: none; padding: 4px 10px; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 11px; transition: 0.2s; }
+        .btn:active { transform: scale(0.9); }
+        input { background: #000; color: #fff; border: 1px solid #444; padding: 6px; border-radius: 6px; font-size: 12px; box-sizing: border-box; }
+        
+        /* Чаты и Кланы */
+        #chat-box, #clan-chat { width: 90vw; max-width: 360px; margin: 5px auto; height: 70px; background: #111; border: 1px solid #333; overflow-y: auto; text-align: left; padding: 5px; font-size: 11px; }
+        #clan-ui { background: #151515; border: 1px solid var(--gold); margin: 5px auto; width: 90vw; max-width: 360px; padding: 8px; border-radius: 10px; }
+
+        /* Announcer */
+        #announcer { position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; font-size: 45px; font-weight: 900; color: var(--red); text-shadow: 0 0 15px var(--red), 0 0 30px #8b0000, 2px 2px #000; pointer-events: none; opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); font-style: italic; text-transform: uppercase; }
+
+        /* Модалка */
+        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 380px; background: #151515; border: 2px solid var(--gold); padding: 15px; z-index: 200; border-radius: 12px; max-height: 80vh; overflow-y: auto; }
         #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 150; }
-        input { background: #000; color: #fff; border: 1px solid #444; padding: 8px; width: 100%; box-sizing: border-box; margin-bottom: 5px; border-radius: 8px; }
-        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-bottom: 10px; }
-        .grid-item { background: #222; padding: 5px; border: 1px solid #444; border-radius: 5px; font-size: 18px; }
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+        .grid-item { background: #222; padding: 5px; border: 1px solid #444; border-radius: 5px; cursor: pointer; }
         .grid-item.active { border-color: var(--gold); background: #332b00; }
-        .shop-item { display:flex; justify-content:space-between; align-items:center; background:#222; padding:8px; margin-bottom:5px; border-radius:8px; font-size:13px; }
     </style>
 </head>
 <body class="t-def" id="app">
+
+<div id="announcer">DOMINATING</div>
 
 <div id="top-bar">
     <div class="p-info">
         <div class="ava-box" id="disp-ava">👤</div>
         <div><b id="disp-coins">0</b> 🪙<br><small id="disp-elo">🏆 1200</small></div>
     </div>
-    <div id="turn-status">GIRI CHESS</div>
+    <div id="turn-status" style="font-size:12px; font-weight:bold;">GIRI CHESS</div>
     <button class="btn" onclick="openM()">МЕНЮ</button>
 </div>
 
 <div id="cap-top" class="captured"></div>
 <div id="board-frame"><div id="board"></div></div>
 <div id="cap-bot" class="captured"></div>
+
 <div id="chat-box"></div>
 
-<div style="padding: 5px 10px;">
+<div style="padding: 5px;">
     <div id="online-controls">
-        <input type="text" id="room-id" placeholder="Код комнаты">
-        <div style="display:flex; gap:5px;">
-            <button class="btn" style="flex:1" onclick="join(1)">СОЗДАТЬ</button>
-            <button class="btn" style="flex:1" onclick="join(2)">ЗАЙТИ</button>
-        </div>
+        <input type="text" id="room-id" placeholder="Код комнаты" style="width:100px;">
+        <button class="btn" onclick="join(1)">СОЗДАТЬ</button>
+        <button class="btn" onclick="join(2)">ЗАЙТИ</button>
     </div>
-    <div id="game-controls" style="display:none; display:flex; gap:5px;">
-        <input type="text" id="msg-input" placeholder="Чат..." onkeypress="if(event.key==='Enter') sendMsg()" style="flex:3">
-        <button class="btn" style="background:#f44336; flex:1" onclick="resign()">🏳️</button>
+    <div id="game-controls" style="display:none; gap:5px; justify-content:center;">
+        <input type="text" id="msg-input" placeholder="Чат..." onkeypress="if(event.key==='Enter') sendMsg()">
+        <button class="btn" style="background:var(--red)" onclick="resign()">🏳️</button>
+    </div>
+</div>
+
+<div id="clan-ui">
+    <div id="clan-setup">
+        <input type="text" id="clan-in-name" placeholder="Название клана" style="width:120px;">
+        <button class="btn" onclick="clanCreate()">СОЗДАТЬ (500🪙)</button>
+        <button class="btn" onclick="clanJoin()">ВСТУПИТЬ</button>
+    </div>
+    <div id="clan-active" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <b id="clan-title" style="color:var(--gold); font-size:12px;"></b>
+            <button class="btn" id="clan-admin-clear" style="display:none; background:var(--red);" onclick="clanClearAll()">ОЧИСТИТЬ</button>
+        </div>
+        <div id="clan-chat"></div>
+        <div style="display:flex; gap:2px;">
+            <input type="text" id="clan-msg-in" placeholder="Сообщение..." style="flex:1;">
+            <button class="btn" onclick="clanSend()">📡</button>
+        </div>
     </div>
 </div>
 
 <div id="overlay" onclick="closeM()"></div>
 <div id="modal">
-    <h4 style="margin:0 0 10px 0; color:var(--gold)">АВАТАРКИ</h4>
+    <h4 style="color:var(--gold); margin:5px 0;">АВАТАРКИ</h4>
     <div class="grid" id="menu-avas"></div>
-    <h4 style="margin:10px 0; color:var(--gold)">МАГАЗИН И ТЕМЫ</h4>
+    <h4 style="color:var(--gold); margin:15px 0 5px 0;">МАГАЗИН</h4>
     <div id="menu-items"></div>
     <div style="margin-top:15px; border-top:1px solid #333; padding-top:10px;">
-        <input type="text" id="promo-input" placeholder="ПРОМОКОД">
-        <button class="btn" style="width:100%" onclick="usePromo()">АКТИВИРОВАТЬ</button>
+        <input type="text" id="promo-input" placeholder="ПРОМОКОД" style="width:70%;">
+        <button class="btn" onclick="usePromo()">OK</button>
     </div>
-    <button class="btn" style="width:100%; margin-top:10px; background:#444; color:#fff" onclick="closeM()">ЗАКРЫТЬ</button>
+    <button class="btn" style="width:100%; margin-top:10px; background:#444;" onclick="closeM()">ЗАКРЫТЬ</button>
 </div>
 
 <script>
+    // Инициализация Firebase (замените на свои данные, если нужно)
     const fb = firebase.initializeApp({ databaseURL: "https://mychess-18329-default-rtdb.europe-west1.firebasedatabase.app" });
     const db = fb.database();
     const game = new Chess();
-    let myColor = 'w', roomId = null, lastSq = null, gameEnded = false;
+    
+    let myColor = 'w', roomId = null, lastSq = null, gameEnded = false, enemySkin = 's-def';
+    const BAD_WORDS = ['плохоеслово', 'мат']; // Добавь свои
 
+    // Данные магазина
     const AVATARS = { '👤':0, '🐱':100, '👺':300, '🥷':500, '🤡':1000 };
     const ITEMS = {
         't-def': { n: 'Классика', p: 0, type: 't' },
         't-purple': { n: 'Фиолет', p: 400, type: 't' },
         't-blood': { n: 'Кровь', p: 400, type: 't' },
-        't-emerald': { n: 'Изумруд', p: 400, type: 't' },
         't-cyber': { n: 'Кибер', p: 400, type: 't' },
-        's-giri': { n: 'Скин: ГИРИ 🪨', p: 1000, type: 's' }
+        's-giri': { n: 'Скин: ГИРИ 🪨', p: 1000, type: 's' },
+        's-neon': { n: 'Скин: НЕОН ⚡', p: 1500, type: 's' },
+        's-forest': { n: 'Скин: ЛЕС 🍄', p: 1200, type: 's' }
     };
 
     let coins = parseInt(localStorage.getItem('g_c')) || 100;
     let elo = parseInt(localStorage.getItem('g_elo')) || 1200;
-    let unlocked = JSON.parse(localStorage.getItem('g_u')) || ['👤', 't-def'];
+    let unlocked = JSON.parse(localStorage.getItem('g_u')) || ['👤', 't-def', 's-def'];
     let curAva = localStorage.getItem('g_a') || '👤';
     let curTheme = localStorage.getItem('g_t') || 't-def';
     let curSkin = localStorage.getItem('g_s') || 's-def';
+    let myClan = localStorage.getItem('g_clan_id') || null;
+    let isLeader = localStorage.getItem('g_clan_leader') === 'true';
 
+    // Цензура
+    function filter(t) {
+        let c = t;
+        BAD_WORDS.forEach(w => { c = c.replace(new RegExp(w, 'gi'), '***'); });
+        return c;
+    }
+
+    // Логика игры
     function join(mode) {
         const id = document.getElementById('room-id').value.trim();
         if(!id) return;
@@ -108,63 +158,23 @@
         document.getElementById('online-controls').style.display = 'none';
         document.getElementById('game-controls').style.display = 'flex';
 
-        if(mode === 1) db.ref('games/'+roomId).set({ f: game.fen(), turn: 'w' });
+        if(mode === 1) db.ref('games/'+roomId).set({ f: game.fen(), turn: 'w', skins: {w: curSkin, b: 's-def'} });
         
         db.ref('games/'+roomId).on('value', s => {
             const data = s.val();
             if(!data) return;
-            if(data.f.startsWith('win_')) {
-                const winner = data.f.split('_')[1];
-                endGame(winner === myColor);
-                return;
-            }
-            if(data.f !== game.fen()) {
-                game.load(data.f);
-                if(game.game_over()) checkGameOver();
-                render();
-            }
+            if(data.skins) enemySkin = (myColor === 'w') ? data.skins.b : data.skins.w;
+            if(data.f.startsWith('win_')) { endGame(data.f.split('_')[1] === myColor); return; }
+            if(data.f !== game.fen()) { game.load(data.f); render(); }
         });
 
         db.ref('chats/'+roomId).on('child_added', s => {
             const m = s.val();
-            document.getElementById('chat-box').innerHTML += `<div><b>${m.a}:</b> ${m.t}</div>`;
-            document.getElementById('chat-box').scrollTop = 999;
+            const box = document.getElementById('chat-box');
+            box.innerHTML += `<div><b>${m.a}:</b> ${m.t}</div>`;
+            box.scrollTop = 999;
         });
         render();
-    }
-
-    function checkGameOver() {
-        if(gameEnded) return;
-        if(game.in_checkmate()) {
-            const winner = game.turn() === 'w' ? 'b' : 'w';
-            db.ref('games/'+roomId).update({ f: 'win_' + winner });
-        } else if(game.in_draw() || game.in_stalemate() || game.in_threefold_repetition()) {
-            alert("Ничья!");
-            location.reload();
-        }
-    }
-
-    function endGame(isWin) {
-        if(gameEnded) return;
-        gameEnded = true;
-        if(isWin) { elo += 25; coins += 50; alert("ПОБЕДА! +25 Эло, +50 монет"); }
-        else { elo -= 25; alert("ПОРАЖЕНИЕ! -25 Эло"); }
-        save();
-        setTimeout(() => location.reload(), 2000);
-    }
-
-    function resign() { 
-        if(confirm("Сдаться?")) {
-            const winner = myColor === 'w' ? 'b' : 'w';
-            db.ref('games/'+roomId).update({ f: 'win_' + winner });
-        }
-    }
-
-    function sendMsg() {
-        const i = document.getElementById('msg-input');
-        if(!i.value || !roomId) return;
-        db.ref('chats/'+roomId).push({ a: curAva, t: i.value });
-        i.value = '';
     }
 
     function render() {
@@ -172,29 +182,35 @@
         boardEl.innerHTML = '';
         document.getElementById('app').className = curTheme;
         updateCaptured();
-        let rows = [0,1,2,3,4,5,6,7], cols = [0,1,2,3,4,5,6,7];
-        if (myColor === 'b') { rows.reverse(); cols.reverse(); }
+        
+        let r_idx = [0,1,2,3,4,5,6,7], c_idx = [0,1,2,3,4,5,6,7];
+        if(myColor === 'b') { r_idx.reverse(); c_idx.reverse(); }
+
         const boardArr = game.board();
-        rows.forEach(r => {
-            cols.forEach(c => {
+        r_idx.forEach(r => {
+            c_idx.forEach(c => {
                 const p = boardArr[r][c];
                 const sq = String.fromCharCode(97+c)+(8-r);
                 const cell = document.createElement('div');
                 cell.className = `cell ${(r+c)%2===0?'w':'b'} ${lastSq===sq?'selected':''}`;
+                
                 if(p) {
                     const pc = document.createElement('div');
                     pc.style.color = p.color === 'w' ? '#fff' : '#111';
                     if(p.color === 'w') pc.style.textShadow = "0 0 2px #000";
-                    pc.innerText = (curSkin === 's-giri') ? {p:'🪨',r:'📦',n:'🏋️',b:'🔔',q:'🏆',k:'💪'}[p.type] : {p:'♟',r:'♜',n:'♞',b:'♝',q:'♛',k:'♚'}[p.type];
+                    const activeSkin = (p.color === myColor) ? curSkin : enemySkin;
+                    pc.innerText = getPieceIcon(p.type, activeSkin);
                     cell.appendChild(pc);
                 }
+
                 cell.onclick = () => {
                     if(game.game_over() || (roomId && game.turn() !== myColor)) return;
                     if(lastSq) {
                         if(game.move({from: lastSq, to: sq, promotion: 'q'})) {
-                            db.ref('games/'+roomId).update({ f: game.fen() });
+                            let up = { f: game.fen() };
+                            up[`skins/${myColor}`] = curSkin;
+                            db.ref('games/'+roomId).update(up);
                             lastSq = null;
-                            if(game.game_over()) checkGameOver();
                         } else {
                             const piece = game.get(sq);
                             if(piece && piece.color === game.turn()) lastSq = sq;
@@ -210,29 +226,93 @@
         });
     }
 
+    function getPieceIcon(t, s) {
+        const icons = {
+            's-def': {p:'♟', r:'♜', n:'♞', b:'♝', q:'♛', k:'♚'},
+            's-giri': {p:'🪨', r:'📦', n:'🏋️', b:'🔔', q:'🏆', k:'💪'},
+            's-neon': {p:'⚡', r:'🏰', n:'🐎', b:'📡', q:'👑', k:'⚛️'},
+            's-forest': {p:'🍄', r:'🌲', n:'🦉', b:'🌿', q:'🍎', k:'🐻'}
+        };
+        return (icons[s] || icons['s-def'])[t];
+    }
+
+    // Dominating логика
+    let lastDom = false;
     function updateCaptured() {
-        const history = game.history({verbose: true});
+        const h = game.history({verbose: true});
         const capW = [], capB = [];
-        history.forEach(m => {
-            if(m.captured) {
-                const char = {p:'♟', r:'♜', n:'♞', b:'♝', q:'♛'}[m.captured];
-                if(m.color === 'w') capB.push(char); else capW.push(char);
-            }
+        h.forEach(m => { if(m.captured) { if(m.color === 'w') capB.push('●'); else capW.push('●'); } });
+        document.getElementById('cap-top').innerText = myColor === 'w' ? '💀'.repeat(capB.length) : '💀'.repeat(capW.length);
+        document.getElementById('cap-bot').innerText = myColor === 'w' ? '💀'.repeat(capW.length) : '💀'.repeat(capB.length);
+        
+        const myK = (myColor === 'w') ? capW.length : capB.length;
+        const enK = (myColor === 'w') ? capB.length : capW.length;
+        if(myK - enK >= 3 && !lastDom) {
+            const a = document.getElementById('announcer');
+            a.style.opacity = '1'; a.style.transform = 'translate(-50%, -50%) scale(1.2)';
+            setTimeout(() => { a.style.opacity = '0'; a.style.transform = 'translate(-50%, -50%) scale(1)'; }, 2000);
+            lastDom = true;
+        } else if(myK - enK < 3) lastDom = false;
+    }
+
+    // Кланы
+    function clanCreate() {
+        const n = filter(document.getElementById('clan-in-name').value.trim());
+        if(n.length<2 || coins<500) return alert("Нужно 500🪙");
+        coins -= 500; myClan = n; isLeader = true;
+        localStorage.setItem('g_clan_id', n); localStorage.setItem('g_clan_leader', 'true');
+        db.ref('clans/'+n).set({ leader: curAva }); save(); initClan();
+    }
+    function clanJoin() {
+        const n = document.getElementById('clan-in-name').value.trim();
+        if(!n) return; myClan = n; isLeader = false;
+        localStorage.setItem('g_clan_id', n); localStorage.setItem('g_clan_leader', 'false');
+        save(); initClan();
+    }
+    function initClan() {
+        if(!myClan) return;
+        document.getElementById('clan-setup').style.display='none';
+        document.getElementById('clan-active').style.display='block';
+        document.getElementById('clan-title').innerText = "КЛАН: " + myClan;
+        if(isLeader) document.getElementById('clan-admin-clear').style.display='block';
+        db.ref('clan_chats/'+myClan).on('value', s => {
+            const ch = document.getElementById('clan-chat'); ch.innerHTML = '';
+            s.forEach(x => {
+                const m = x.val();
+                const d = isLeader ? `<span style="color:red" onclick="clanDel('${x.key}')"> [X]</span>` : '';
+                ch.innerHTML += `<div><b>${m.a}:</b> ${m.t}${d}</div>`;
+            });
+            ch.scrollTop = 999;
         });
-        document.getElementById('cap-top').innerText = myColor === 'w' ? capB.join('') : capW.join('');
-        document.getElementById('cap-bot').innerText = myColor === 'w' ? capW.join('') : capB.join('');
+    }
+    function clanSend() {
+        const i = document.getElementById('clan-msg-in');
+        if(!i.value || !myClan) return;
+        db.ref('clan_chats/'+myClan).push({ a: curAva, t: filter(i.value) });
+        i.value = '';
+    }
+    function clanDel(k) { if(isLeader) db.ref('clan_chats/'+myClan+'/'+k).remove(); }
+    function clanClearAll() { if(isLeader && confirm("Очистить?")) db.ref('clan_chats/'+myClan).remove(); }
+
+    // Промо и Магазин
+    function usePromo() {
+        const p = document.getElementById('promo-input').value.toUpperCase();
+        if(p === 'RICH10000') { coins += 10000; alert("+10,000🪙"); }
+        else if(p === 'ULTRA3000') { elo = 3000; alert("🏆 ELO 3000"); }
+        else if(p === 'GIRI') { coins += 1000; alert("+1000🪙"); }
+        save(); openM();
     }
 
     function openM() {
-        const avaG = document.getElementById('menu-avas'), itemG = document.getElementById('menu-items');
-        avaG.innerHTML = ''; itemG.innerHTML = '';
+        const aG = document.getElementById('menu-avas'), iG = document.getElementById('menu-items');
+        aG.innerHTML = ''; iG.innerHTML = '';
         for(let a in AVATARS) {
-            const isU = unlocked.includes(a);
-            avaG.innerHTML += `<div class="grid-item ${curAva===a?'active':''}" onclick="buyA('${a}')">${a}${isU?'':'<br><small style="font-size:8px">'+AVATARS[a]+'</small>'}</div>`;
+            const u = unlocked.includes(a);
+            aG.innerHTML += `<div class="grid-item ${curAva===a?'active':''}" onclick="buyA('${a}')">${a}${u?'':'<br><small style="font-size:8px">'+AVATARS[a]+'</small>'}</div>`;
         }
         for(let id in ITEMS) {
-            const isU = unlocked.includes(id);
-            itemG.innerHTML += `<div class="shop-item"><span>${ITEMS[id].n}</span> <button class="btn" onclick="buyI('${id}')">${isU?'ВЗЯТЬ':ITEMS[id].p+'🪙'}</button></div>`;
+            const u = unlocked.includes(id);
+            iG.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:12px;"><span>${ITEMS[id].n}</span> <button class="btn" onclick="buyI('${id}')">${u?'ВЗЯТЬ':ITEMS[id].p+'🪙'}</button></div>`;
         }
         document.getElementById('modal').style.display='block';
         document.getElementById('overlay').style.display='block';
@@ -248,13 +328,7 @@
         else if(coins >= ITEMS[id].p) { coins -= ITEMS[id].p; unlocked.push(id); }
         save(); openM();
     }
-    function usePromo() {
-        const p = document.getElementById('promo-input').value.toUpperCase();
-        if(p === 'GIRI') { coins += 1000; alert("+1000 монет!"); }
-        document.getElementById('promo-input').value = ''; save(); openM();
-    }
-    function closeM() { document.getElementById('modal').style.display='none'; document.getElementById('overlay').style.display='none'; }
-    
+
     function save() {
         localStorage.setItem('g_c', coins); localStorage.setItem('g_u', JSON.stringify(unlocked));
         localStorage.setItem('g_a', curAva); localStorage.setItem('g_t', curTheme); 
@@ -264,7 +338,20 @@
         document.getElementById('disp-elo').innerText = "🏆 " + elo;
         render();
     }
+
+    function sendMsg() {
+        const i = document.getElementById('msg-input');
+        if(!i.value || !roomId) return;
+        db.ref('chats/'+roomId).push({ a: curAva, t: filter(i.value) });
+        i.value = '';
+    }
+
+    function closeM() { document.getElementById('modal').style.display='none'; document.getElementById('overlay').style.display='none'; }
+    function resign() { if(confirm("Сдаться?")) db.ref('games/'+roomId).update({ f: 'win_' + (myColor==='w'?'b':'w') }); }
+    function endGame(win) { if(gameEnded) return; gameEnded = true; if(win) { coins+=50; elo+=25; alert("WIN! +50🪙"); } else { elo-=25; alert("LOSE!"); } save(); setTimeout(()=>location.reload(), 2000); }
+
     save();
+    if(myClan) initClan();
 </script>
 </body>
 </html>
