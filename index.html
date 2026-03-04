@@ -19,7 +19,11 @@
         #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); width: 100%; height: 100%; }
         .cell { display: flex; align-items: center; justify-content: center; font-size: 26px; cursor: pointer; }
         
+        /* ТЕМЫ ДОСОК */
         .t-def .w { background: #f0d9b5; } .t-def .b { background: #b58863; }
+        .t-purple .w { background: #4d008c; } .t-purple .b { background: #1a0029; }
+        .t-blood .w { background: #8a0000; } .t-blood .b { background: #300000; }
+        .t-cyber .w { background: #00ecff; } .t-cyber .b { background: #00374a; }
         .selected { background: rgba(255, 215, 0, 0.5) !important; }
 
         .btn { background: linear-gradient(var(--gold), var(--gold-d)); color: #000; border: none; padding: 6px 10px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 10px; text-transform: uppercase; }
@@ -37,6 +41,10 @@
         
         @keyframes gold-shine { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         .champion-name { background: linear-gradient(90deg, #ffd700, #fff, #b8860b, #ffd700); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: gold-shine 2s linear infinite; font-weight: bold; }
+        
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+        .grid-item { background: #222; padding: 8px 0; border: 1px solid #444; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        .grid-item.active { border-color: var(--gold); background: #332b00; }
     </style>
 </head>
 <body class="t-def" id="app">
@@ -87,9 +95,23 @@
     let elo = parseInt(localStorage.getItem('g_elo')) || 1200;
     let gamesPlayed = parseInt(localStorage.getItem('g_gp')) || 0;
     let myClan = localStorage.getItem('g_clan') || null;
+    let unlocked = JSON.parse(localStorage.getItem('g_u')) || ['👤', 't-def', 's-def'];
     let curAva = localStorage.getItem('g_a') || '👤';
+    let curTheme = localStorage.getItem('g_t') || 't-def';
+    let curSkin = localStorage.getItem('g_s') || 's-def';
 
-    let myColor = 'w', roomId = null, lastSq = null, gameEnded = false;
+    let myColor = 'w', roomId = null, lastSq = null, gameEnded = false, enemySkin = 's-def';
+
+    // ЦЕНЫ И ТОВАРЫ
+    const AVATARS = { '👤':0, '🐱':100, '👺':300, '🥷':500, '🤡':1000 };
+    const ITEMS = {
+        't-def': { n: 'Классика', p: 0, type: 't' },
+        't-purple': { n: 'Фиолет', p: 400, type: 't' },
+        't-blood': { n: 'Кровь', p: 400, type: 't' },
+        't-cyber': { n: 'Кибер', p: 400, type: 't' },
+        's-giri': { n: 'Скин: ГИРИ 🪨', p: 1000, type: 's' },
+        's-neon': { n: 'Скин: НЕОН ⚡', p: 1500, type: 's' }
+    };
 
     function filter(t) {
         const bad = [/хуй/, /пизд/, /еба/, /бля/, /сук/];
@@ -106,9 +128,10 @@
         document.getElementById('online-controls').style.display = 'none';
         document.getElementById('game-controls').style.display = 'flex';
         
-        if(mode === 1) db.ref('games/'+roomId).set({ f: game.fen() });
+        if(mode === 1) db.ref('games/'+roomId).set({ f: game.fen(), skins: {w: curSkin, b: 's-def'} });
         db.ref('games/'+roomId).on('value', s => {
             const d = s.val(); if(!d) return;
+            if(d.skins) enemySkin = (myColor === 'w') ? d.skins.b : d.skins.w;
             if(d.f.startsWith('win_')) endGame(d.f.split('_')[1] === myColor);
             else if(d.f !== game.fen()) { game.load(d.f); render(); }
         });
@@ -127,6 +150,7 @@
 
     function render() {
         const bEl = document.getElementById('board'); bEl.innerHTML = '';
+        document.getElementById('app').className = curTheme; // Применяем тему доски
         let r_idx = [0,1,2,3,4,5,6,7], c_idx = [0,1,2,3,4,5,6,7];
         if(myColor === 'b') { r_idx.reverse(); c_idx.reverse(); }
         const bArr = game.board();
@@ -139,7 +163,8 @@
                 if(p) {
                     const pc = document.createElement('div');
                     pc.style.color = p.color === 'w' ? '#fff' : '#111';
-                    pc.innerText = {p:'♟', r:'♜', n:'♞', b:'♝', q:'♛', k:'♚'}[p.type];
+                    // Скины фигур
+                    pc.innerText = getPieceIcon(p.type, (p.color === game.turn() ? curSkin : enemySkin));
                     cell.appendChild(pc);
                 }
                 cell.onclick = () => { if(myColor!=='obs' && !gameEnded && (game.turn()===myColor || !roomId)) handleMove(sq); };
@@ -151,17 +176,27 @@
     function handleMove(sq) {
         if(lastSq) {
             if(game.move({from: lastSq, to: sq, promotion: 'q'})) {
-                if(roomId) db.ref('games/'+roomId).update({ f: game.fen() });
+                if(roomId) db.ref('games/'+roomId).update({ f: game.fen(), [`skins/${myColor}`]: curSkin });
                 lastSq = null;
             } else lastSq = (game.get(sq)?.color === game.turn()) ? sq : null;
         } else lastSq = (game.get(sq)?.color === game.turn()) ? sq : null;
         render(); if(game.game_over()) endGame(game.turn() !== myColor);
     }
 
+    function getPieceIcon(t, s) {
+        const icons = {
+            's-def': {p:'♟', r:'♜', n:'♞', b:'♝', q:'♛', k:'♚'},
+            's-giri': {p:'🪨', r:'📦', n:'🏋️', b:'🔔', q:'🏆', k:'💪'},
+            's-neon': {p:'⚡', r:'🏰', n:'🐎', b:'📡', q:'👑', k:'⚛️'}
+        };
+        return (icons[s] || icons['s-def'])[t];
+    }
+
     function openM(tab = 'profile') {
         const m = document.getElementById('modal');
         let html = `<div style="display:flex; justify-content:space-around; margin-bottom:12px; border-bottom:1px solid #333;">
-            <span class="tab-btn ${tab==='profile'?'tab-active':''}" onclick="openM('profile')">АККАУНТ</span>
+            <span class="tab-btn ${tab==='profile'?'tab-active':''}" onclick="openM('profile')">ПРОФИЛЬ</span>
+            <span class="tab-btn ${tab==='shop'?'tab-active':''}" onclick="openM('shop')">МАГАЗИН</span>
             <span class="tab-btn ${tab==='clans'?'tab-active':''}" onclick="openM('clans')">КЛАНЫ</span>
             <span class="tab-btn ${tab==='top'?'tab-active':''}" onclick="openM('top')">ТОП-5</span>
         </div>`;
@@ -172,6 +207,9 @@
                 ELO: ${elo} | Игры: ${gamesPlayed}<br>Клан: ${myClan||'НЕТ'}<br>
                 Пароль: <span style="color:var(--cyan)">${myPass}</span>
             </div><input id="p-in" placeholder="ПРОМОКОД" style="margin-top:10px; width:65%"><button class="btn" onclick="usePromo()">OK</button>`;
+        } else if(tab === 'shop') {
+            html += `<div style="max-height:220px; overflow-y:auto; padding-right:5px;"><div class="grid" id="menu-avas"></div><div id="menu-items" style="margin-top:10px;"></div></div>`;
+            setTimeout(renderShop, 10);
         } else if(tab === 'clans') {
             html += `<button class="btn" onclick="createClan()" style="width:100%; margin-bottom:10px;">ВСТУПИТЬ / СОЗДАТЬ</button><div id="clan-list"></div>`;
             setTimeout(renderClans, 50);
@@ -181,6 +219,20 @@
         }
         html += `<button class="btn" style="width:100%; margin-top:10px; background:#444; color:#fff;" onclick="closeM()">ЗАКРЫТЬ</button>`;
         m.innerHTML = html; m.style.display='block'; document.getElementById('overlay').style.display='block';
+    }
+
+    function renderShop() {
+        const aG = document.getElementById('menu-avas'), iG = document.getElementById('menu-items');
+        aG.innerHTML = ''; iG.innerHTML = '';
+        for(let a in AVATARS) {
+            const u = unlocked.includes(a);
+            aG.innerHTML += `<div class="grid-item ${curAva===a?'active':''}" onclick="buyA('${a}')">${a}<br><small style="font-size:7px">${u?'✔':AVATARS[a]}</small></div>`;
+        }
+        for(let id in ITEMS) {
+            const u = unlocked.includes(id);
+            const isSel = (ITEMS[id].type==='s' ? curSkin===id : curTheme===id);
+            iG.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:10px; background:#1a1a1a; padding:3px; border-radius:4px; ${isSel?'border:1px solid var(--gold)':''}"><span>${ITEMS[id].n}</span> <button class="btn" onclick="buyI('${id}')" style="padding:2px 5px; font-size:8px;">${u?'ВЗЯТЬ':ITEMS[id].p+'🪙'}</button></div>`;
+        }
     }
 
     function createClan() {
@@ -217,18 +269,26 @@
         });
     }
 
+    // ЛОГИКА ПОКУПОК
+    function buyA(a) { if(unlocked.includes(a)) curAva = a; else if(coins >= AVATARS[a]) { coins -= AVATARS[a]; unlocked.push(a); curAva = a; } save(); openM('shop'); }
+    function buyI(id) { if(unlocked.includes(id)) { if(ITEMS[id].type==='s') curSkin=id; else curTheme=id; } else if(coins >= ITEMS[id].p) { coins -= ITEMS[id].p; unlocked.push(id); } save(); openM('shop'); }
+
     function usePromo() {
         const p = document.getElementById('p-in').value.toUpperCase();
-        if(p === 'ADMIN777') { isAdmin = true; localStorage.setItem('g_admin', 'true'); alert("АДМИН АКТИВИРОВАН"); openM('profile'); }
+        if(p === 'ADMIN777') { isAdmin = true; localStorage.setItem('g_admin', 'true'); alert("АДМИН АКТИВИРОВАН"); location.reload(); }
         else if(p === 'GIFT') { coins+=100; alert("+100🪙"); save(); }
         else alert("Неверный код");
     }
 
     function save() {
         localStorage.setItem('g_c', coins); localStorage.setItem('g_elo', elo); localStorage.setItem('g_gp', gamesPlayed);
+        localStorage.setItem('g_u', JSON.stringify(unlocked)); localStorage.setItem('g_a', curAva);
+        localStorage.setItem('g_t', curTheme); localStorage.setItem('g_s', curSkin);
+        
         document.getElementById('disp-coins').innerText = coins; document.getElementById('disp-elo').innerText = "🏆 "+elo;
         db.ref('leaderboard/'+myLogin).set({ name: myLogin, elo: elo, ava: curAva });
         if(myClan) db.ref(`clans/${myClan}/members/${myLogin}`).set(elo);
+        render(); // Обновляем доску при смене скинов/тем
     }
 
     function sendMsg() {
