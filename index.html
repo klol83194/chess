@@ -3,355 +3,248 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GIRI CHESS: ULTIMATE</title>
+    <title>GIRI CHESS ULTIMATE</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --gold: #ffd700; --bg: #0d0d0d; --red: #ff0000; }
-        body { background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; text-align: center; overflow-x: hidden; -webkit-user-select: none; }
+        :root { --gold: #ffd700; --gold-d: #b8860b; --bg: #0a0a0a; --red: #ff4444; --cyan: #00ecff; }
+        body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; text-align: center; overflow-x: hidden; background-image: radial-gradient(circle, #1a1a1a 0%, #0a0a0a 100%); }
         
-        /* UI Элементы */
-        #top-bar { background: #1a1a1a; padding: 5px; border-bottom: 2px solid var(--gold); display: flex; justify-content: space-around; align-items: center; height: 50px; }
-        .p-info { display: flex; align-items: center; gap: 8px; text-align: left; }
-        .ava-box { width: 35px; height: 35px; border-radius: 50%; background: #222; border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 18px; }
-        .captured { height: 25px; display: flex; justify-content: center; gap: 2px; font-size: 16px; color: rgba(255,255,255,0.6); margin: 5px 0; min-height: 25px; }
+        #top-bar { background: rgba(20,20,20,0.9); backdrop-filter: blur(10px); padding: 5px; border-bottom: 1px solid rgba(255,215,0,0.2); display: flex; justify-content: space-around; align-items: center; height: 45px; position: sticky; top:0; z-index:100; }
+        .p-info { display: flex; align-items: center; gap: 8px; font-size: 11px; text-align: left; }
+        .ava-box { width: 32px; height: 32px; border-radius: 50%; background: #222; border: 1px solid var(--gold); display: flex; align-items: center; justify-content: center; font-size: 16px; }
         
-        /* Доска (ФИКС СЖАТИЯ) */
-        #board-frame { width: 92vw; max-width: 360px; aspect-ratio: 1/1; margin: 0 auto; border: 4px solid #333; box-sizing: border-box; }
+        #board-frame { width: 85vw; max-width: 310px; aspect-ratio: 1/1; margin: 10px auto; border: 5px solid #222; border-radius: 12px; overflow: hidden; box-shadow: 0 0 20px #000; }
         #board { display: grid; grid-template-columns: repeat(8, 1fr); grid-template-rows: repeat(8, 1fr); width: 100%; height: 100%; }
-        .cell { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 30px; cursor: pointer; transition: background 0.2s; }
+        .cell { display: flex; align-items: center; justify-content: center; font-size: 26px; cursor: pointer; }
         
-        /* Темы */
         .t-def .w { background: #f0d9b5; } .t-def .b { background: #b58863; }
-        .t-purple .w { background: #4d008c; } .t-purple .b { background: #1a0029; }
-        .t-blood .w { background: #8a0000; } .t-blood .b { background: #300000; }
-        .t-cyber .w { background: #00ecff; } .t-cyber .b { background: #00374a; }
-        .selected { background: rgba(255, 215, 0, 0.6) !important; }
+        .selected { background: rgba(255, 215, 0, 0.5) !important; }
 
-        /* Кнопки и Инпуты */
-        .btn { background: linear-gradient(145deg, #ffd700, #b8860b); color: #000; border: none; padding: 4px 10px; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 11px; transition: 0.2s; }
-        .btn:active { transform: scale(0.9); }
-        input { background: #000; color: #fff; border: 1px solid #444; padding: 6px; border-radius: 6px; font-size: 12px; box-sizing: border-box; }
+        .btn { background: linear-gradient(var(--gold), var(--gold-d)); color: #000; border: none; padding: 6px 10px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 10px; text-transform: uppercase; }
+        input { background: #111; color: #fff; border: 1px solid #333; padding: 6px; border-radius: 6px; font-size: 11px; outline: none; }
+
+        #chat-box { width: 85vw; max-width: 310px; margin: 5px auto; height: 60px; background: rgba(0,0,0,0.3); border: 1px solid #222; border-radius: 8px; overflow-y: auto; text-align: left; padding: 5px; font-size: 10px; }
+        .adm-msg { background: rgba(255, 215, 0, 0.1); border-left: 2px solid var(--gold); color: var(--gold) !important; padding: 2px 4px; border-radius: 4px; }
         
-        /* Чаты и Кланы */
-        #chat-box, #clan-chat { width: 90vw; max-width: 360px; margin: 5px auto; height: 70px; background: #111; border: 1px solid #333; overflow-y: auto; text-align: left; padding: 5px; font-size: 11px; }
-        #clan-ui { background: #151515; border: 1px solid var(--gold); margin: 5px auto; width: 90vw; max-width: 360px; padding: 8px; border-radius: 10px; }
-
-        /* Announcer */
-        #announcer { position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; font-size: 45px; font-weight: 900; color: var(--red); text-shadow: 0 0 15px var(--red), 0 0 30px #8b0000, 2px 2px #000; pointer-events: none; opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); font-style: italic; text-transform: uppercase; }
-
-        /* Модалка */
-        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 380px; background: #151515; border: 2px solid var(--gold); padding: 15px; z-index: 200; border-radius: 12px; max-height: 80vh; overflow-y: auto; }
+        #modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85%; max-width: 320px; background: #151515; border: 1px solid var(--gold); padding: 15px; z-index: 200; border-radius: 15px; box-shadow: 0 0 50px #000; }
         #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 150; }
-        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
-        .grid-item { background: #222; padding: 5px; border: 1px solid #444; border-radius: 5px; cursor: pointer; }
-        .grid-item.active { border-color: var(--gold); background: #332b00; }
+        
+        .tab-btn { cursor: pointer; color: #666; font-size: 11px; font-weight: bold; padding: 5px; }
+        .tab-active { color: var(--gold); border-bottom: 2px solid var(--gold); }
+        .clan-row { display: flex; justify-content: space-between; padding: 6px; background: #1a1a1a; margin-bottom: 4px; border-radius: 6px; font-size: 11px; border: 1px solid #222; }
+        
+        @keyframes gold-shine { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .champion-name { background: linear-gradient(90deg, #ffd700, #fff, #b8860b, #ffd700); background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: gold-shine 2s linear infinite; font-weight: bold; }
     </style>
 </head>
 <body class="t-def" id="app">
-
-<div id="announcer">DOMINATING</div>
 
 <div id="top-bar">
     <div class="p-info">
         <div class="ava-box" id="disp-ava">👤</div>
         <div><b id="disp-coins">0</b> 🪙<br><small id="disp-elo">🏆 1200</small></div>
     </div>
-    <div id="turn-status" style="font-size:12px; font-weight:bold;">GIRI CHESS</div>
+    <div id="turn-status" style="font-size:10px; font-weight:bold; color:var(--cyan)">GIRI CHESS ULTIMATE</div>
     <button class="btn" onclick="openM()">МЕНЮ</button>
 </div>
 
-<div id="cap-top" class="captured"></div>
 <div id="board-frame"><div id="board"></div></div>
-<div id="cap-bot" class="captured"></div>
-
 <div id="chat-box"></div>
 
-<div style="padding: 5px;">
+<div id="controls" style="padding: 5px;">
     <div id="online-controls">
-        <input type="text" id="room-id" placeholder="Код комнаты" style="width:100px;">
+        <input type="text" id="room-id" placeholder="ID" style="width:40px;">
         <button class="btn" onclick="join(1)">СОЗДАТЬ</button>
         <button class="btn" onclick="join(2)">ЗАЙТИ</button>
+        <button class="btn" style="background:#333;color:#fff" onclick="join(3)">👀</button>
     </div>
-    <div id="game-controls" style="display:none; gap:5px; justify-content:center;">
-        <input type="text" id="msg-input" placeholder="Чат..." onkeypress="if(event.key==='Enter') sendMsg()">
+    <div id="game-controls" style="display:none; gap:5px; justify-content:center; margin-top:5px;">
+        <input type="text" id="msg-input" placeholder="Чат..." style="flex:1" onkeypress="if(event.key==='Enter') sendMsg()">
         <button class="btn" style="background:var(--red)" onclick="resign()">🏳️</button>
     </div>
 </div>
 
-<div id="clan-ui">
-    <div id="clan-setup">
-        <input type="text" id="clan-in-name" placeholder="Название клана" style="width:120px;">
-        <button class="btn" onclick="clanCreate()">СОЗДАТЬ (500🪙)</button>
-        <button class="btn" onclick="clanJoin()">ВСТУПИТЬ</button>
-    </div>
-    <div id="clan-active" style="display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <b id="clan-title" style="color:var(--gold); font-size:12px;"></b>
-            <button class="btn" id="clan-admin-clear" style="display:none; background:var(--red);" onclick="clanClearAll()">ОЧИСТИТЬ</button>
-        </div>
-        <div id="clan-chat"></div>
-        <div style="display:flex; gap:2px;">
-            <input type="text" id="clan-msg-in" placeholder="Сообщение..." style="flex:1;">
-            <button class="btn" onclick="clanSend()">📡</button>
-        </div>
-    </div>
-</div>
-
 <div id="overlay" onclick="closeM()"></div>
-<div id="modal">
-    <h4 style="color:var(--gold); margin:5px 0;">АВАТАРКИ</h4>
-    <div class="grid" id="menu-avas"></div>
-    <h4 style="color:var(--gold); margin:15px 0 5px 0;">МАГАЗИН</h4>
-    <div id="menu-items"></div>
-    <div style="margin-top:15px; border-top:1px solid #333; padding-top:10px;">
-        <input type="text" id="promo-input" placeholder="ПРОМОКОД" style="width:70%;">
-        <button class="btn" onclick="usePromo()">OK</button>
-    </div>
-    <button class="btn" style="width:100%; margin-top:10px; background:#444;" onclick="closeM()">ЗАКРЫТЬ</button>
-</div>
+<div id="modal"></div>
 
 <script>
-    // Инициализация Firebase (замените на свои данные, если нужно)
     const fb = firebase.initializeApp({ databaseURL: "https://mychess-18329-default-rtdb.europe-west1.firebasedatabase.app" });
     const db = fb.database();
     const game = new Chess();
+
+    if (!localStorage.getItem('g_login')) {
+        const num = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+        localStorage.setItem('g_login', 'GIRI' + num);
+        localStorage.setItem('g_pass', Math.random().toString(36).substr(2,6).toUpperCase());
+    }
+    const myLogin = localStorage.getItem('g_login');
+    const myPass = localStorage.getItem('g_pass');
     
-    let myColor = 'w', roomId = null, lastSq = null, gameEnded = false, enemySkin = 's-def';
-    const BAD_WORDS = ['плохоеслово', 'мат']; // Добавь свои
-
-    // Данные магазина
-    const AVATARS = { '👤':0, '🐱':100, '👺':300, '🥷':500, '🤡':1000 };
-    const ITEMS = {
-        't-def': { n: 'Классика', p: 0, type: 't' },
-        't-purple': { n: 'Фиолет', p: 400, type: 't' },
-        't-blood': { n: 'Кровь', p: 400, type: 't' },
-        't-cyber': { n: 'Кибер', p: 400, type: 't' },
-        's-giri': { n: 'Скин: ГИРИ 🪨', p: 1000, type: 's' },
-        's-neon': { n: 'Скин: НЕОН ⚡', p: 1500, type: 's' },
-        's-forest': { n: 'Скин: ЛЕС 🍄', p: 1200, type: 's' }
-    };
-
+    let isAdmin = localStorage.getItem('g_admin') === 'true';
     let coins = parseInt(localStorage.getItem('g_c')) || 100;
     let elo = parseInt(localStorage.getItem('g_elo')) || 1200;
-    let unlocked = JSON.parse(localStorage.getItem('g_u')) || ['👤', 't-def', 's-def'];
+    let gamesPlayed = parseInt(localStorage.getItem('g_gp')) || 0;
+    let myClan = localStorage.getItem('g_clan') || null;
     let curAva = localStorage.getItem('g_a') || '👤';
-    let curTheme = localStorage.getItem('g_t') || 't-def';
-    let curSkin = localStorage.getItem('g_s') || 's-def';
-    let myClan = localStorage.getItem('g_clan_id') || null;
-    let isLeader = localStorage.getItem('g_clan_leader') === 'true';
 
-    // Цензура
+    let myColor = 'w', roomId = null, lastSq = null, gameEnded = false;
+
     function filter(t) {
-        let c = t;
-        BAD_WORDS.forEach(w => { c = c.replace(new RegExp(w, 'gi'), '***'); });
-        return c;
+        const bad = [/хуй/, /пизд/, /еба/, /бля/, /сук/];
+        if(bad.some(p => p.test(t.toLowerCase()))) return "GIRI TOP! 🏆";
+        return t;
     }
 
-    // Логика игры
     function join(mode) {
         const id = document.getElementById('room-id').value.trim();
         if(!id) return;
-        roomId = id; myColor = (mode === 1) ? 'w' : 'b';
+        roomId = id; 
+        myColor = (mode === 3) ? 'obs' : (mode === 1 ? 'w' : 'b');
         game.reset(); gameEnded = false;
         document.getElementById('online-controls').style.display = 'none';
         document.getElementById('game-controls').style.display = 'flex';
-
-        if(mode === 1) db.ref('games/'+roomId).set({ f: game.fen(), turn: 'w', skins: {w: curSkin, b: 's-def'} });
         
+        if(mode === 1) db.ref('games/'+roomId).set({ f: game.fen() });
         db.ref('games/'+roomId).on('value', s => {
-            const data = s.val();
-            if(!data) return;
-            if(data.skins) enemySkin = (myColor === 'w') ? data.skins.b : data.skins.w;
-            if(data.f.startsWith('win_')) { endGame(data.f.split('_')[1] === myColor); return; }
-            if(data.f !== game.fen()) { game.load(data.f); render(); }
+            const d = s.val(); if(!d) return;
+            if(d.f.startsWith('win_')) endGame(d.f.split('_')[1] === myColor);
+            else if(d.f !== game.fen()) { game.load(d.f); render(); }
         });
-
-        db.ref('chats/'+roomId).on('child_added', s => {
-            const m = s.val();
-            const box = document.getElementById('chat-box');
-            box.innerHTML += `<div><b>${m.a}:</b> ${m.t}</div>`;
+        db.ref('chats/'+roomId).on('value', s => {
+            const box = document.getElementById('chat-box'); box.innerHTML = '';
+            s.forEach(snap => {
+                const m = snap.val();
+                const isAdm = m.adm === true;
+                const del = (m.uid === myLogin || isAdmin) ? `<span style="color:red;cursor:pointer" onclick="delMsg('${snap.key}')"> ×</span>` : '';
+                box.innerHTML += `<div class="${isAdm?'adm-msg':''}"><b>${isAdm?'👑 ':''}${m.a}:</b> ${m.t}${del}</div>`;
+            });
             box.scrollTop = 999;
         });
         render();
     }
 
     function render() {
-        const boardEl = document.getElementById('board');
-        boardEl.innerHTML = '';
-        document.getElementById('app').className = curTheme;
-        updateCaptured();
-        
+        const bEl = document.getElementById('board'); bEl.innerHTML = '';
         let r_idx = [0,1,2,3,4,5,6,7], c_idx = [0,1,2,3,4,5,6,7];
         if(myColor === 'b') { r_idx.reverse(); c_idx.reverse(); }
-
-        const boardArr = game.board();
+        const bArr = game.board();
         r_idx.forEach(r => {
             c_idx.forEach(c => {
-                const p = boardArr[r][c];
+                const p = bArr[r][c];
                 const sq = String.fromCharCode(97+c)+(8-r);
                 const cell = document.createElement('div');
                 cell.className = `cell ${(r+c)%2===0?'w':'b'} ${lastSq===sq?'selected':''}`;
-                
                 if(p) {
                     const pc = document.createElement('div');
                     pc.style.color = p.color === 'w' ? '#fff' : '#111';
-                    if(p.color === 'w') pc.style.textShadow = "0 0 2px #000";
-                    const activeSkin = (p.color === myColor) ? curSkin : enemySkin;
-                    pc.innerText = getPieceIcon(p.type, activeSkin);
+                    pc.innerText = {p:'♟', r:'♜', n:'♞', b:'♝', q:'♛', k:'♚'}[p.type];
                     cell.appendChild(pc);
                 }
-
-                cell.onclick = () => {
-                    if(game.game_over() || (roomId && game.turn() !== myColor)) return;
-                    if(lastSq) {
-                        if(game.move({from: lastSq, to: sq, promotion: 'q'})) {
-                            let up = { f: game.fen() };
-                            up[`skins/${myColor}`] = curSkin;
-                            db.ref('games/'+roomId).update(up);
-                            lastSq = null;
-                        } else {
-                            const piece = game.get(sq);
-                            if(piece && piece.color === game.turn()) lastSq = sq;
-                        }
-                    } else {
-                        const piece = game.get(sq);
-                        if(piece && piece.color === game.turn()) lastSq = sq;
-                    }
-                    render();
-                };
-                boardEl.appendChild(cell);
+                cell.onclick = () => { if(myColor!=='obs' && !gameEnded && (game.turn()===myColor || !roomId)) handleMove(sq); };
+                bEl.appendChild(cell);
             });
         });
     }
 
-    function getPieceIcon(t, s) {
-        const icons = {
-            's-def': {p:'♟', r:'♜', n:'♞', b:'♝', q:'♛', k:'♚'},
-            's-giri': {p:'🪨', r:'📦', n:'🏋️', b:'🔔', q:'🏆', k:'💪'},
-            's-neon': {p:'⚡', r:'🏰', n:'🐎', b:'📡', q:'👑', k:'⚛️'},
-            's-forest': {p:'🍄', r:'🌲', n:'🦉', b:'🌿', q:'🍎', k:'🐻'}
-        };
-        return (icons[s] || icons['s-def'])[t];
+    function handleMove(sq) {
+        if(lastSq) {
+            if(game.move({from: lastSq, to: sq, promotion: 'q'})) {
+                if(roomId) db.ref('games/'+roomId).update({ f: game.fen() });
+                lastSq = null;
+            } else lastSq = (game.get(sq)?.color === game.turn()) ? sq : null;
+        } else lastSq = (game.get(sq)?.color === game.turn()) ? sq : null;
+        render(); if(game.game_over()) endGame(game.turn() !== myColor);
     }
 
-    // Dominating логика
-    let lastDom = false;
-    function updateCaptured() {
-        const h = game.history({verbose: true});
-        const capW = [], capB = [];
-        h.forEach(m => { if(m.captured) { if(m.color === 'w') capB.push('●'); else capW.push('●'); } });
-        document.getElementById('cap-top').innerText = myColor === 'w' ? '💀'.repeat(capB.length) : '💀'.repeat(capW.length);
-        document.getElementById('cap-bot').innerText = myColor === 'w' ? '💀'.repeat(capW.length) : '💀'.repeat(capB.length);
-        
-        const myK = (myColor === 'w') ? capW.length : capB.length;
-        const enK = (myColor === 'w') ? capB.length : capW.length;
-        if(myK - enK >= 3 && !lastDom) {
-            const a = document.getElementById('announcer');
-            a.style.opacity = '1'; a.style.transform = 'translate(-50%, -50%) scale(1.2)';
-            setTimeout(() => { a.style.opacity = '0'; a.style.transform = 'translate(-50%, -50%) scale(1)'; }, 2000);
-            lastDom = true;
-        } else if(myK - enK < 3) lastDom = false;
+    function openM(tab = 'profile') {
+        const m = document.getElementById('modal');
+        let html = `<div style="display:flex; justify-content:space-around; margin-bottom:12px; border-bottom:1px solid #333;">
+            <span class="tab-btn ${tab==='profile'?'tab-active':''}" onclick="openM('profile')">АККАУНТ</span>
+            <span class="tab-btn ${tab==='clans'?'tab-active':''}" onclick="openM('clans')">КЛАНЫ</span>
+            <span class="tab-btn ${tab==='top'?'tab-active':''}" onclick="openM('top')">ТОП-5</span>
+        </div>`;
+
+        if(tab === 'profile') {
+            html += `<div style="background:#222; padding:10px; border-radius:10px; font-size:11px; text-align:left;">
+                <b style="color:var(--gold)">${myLogin}</b> ${isAdmin?'(ADMIN)':''}<br>
+                ELO: ${elo} | Игры: ${gamesPlayed}<br>Клан: ${myClan||'НЕТ'}<br>
+                Пароль: <span style="color:var(--cyan)">${myPass}</span>
+            </div><input id="p-in" placeholder="ПРОМОКОД" style="margin-top:10px; width:65%"><button class="btn" onclick="usePromo()">OK</button>`;
+        } else if(tab === 'clans') {
+            html += `<button class="btn" onclick="createClan()" style="width:100%; margin-bottom:10px;">ВСТУПИТЬ / СОЗДАТЬ</button><div id="clan-list"></div>`;
+            setTimeout(renderClans, 50);
+        } else {
+            html += `<div id="top-list"></div>`;
+            setTimeout(renderTop, 50);
+        }
+        html += `<button class="btn" style="width:100%; margin-top:10px; background:#444; color:#fff;" onclick="closeM()">ЗАКРЫТЬ</button>`;
+        m.innerHTML = html; m.style.display='block'; document.getElementById('overlay').style.display='block';
     }
 
-    // Кланы
-    function clanCreate() {
-        const n = filter(document.getElementById('clan-in-name').value.trim());
-        if(n.length<2 || coins<500) return alert("Нужно 500🪙");
-        coins -= 500; myClan = n; isLeader = true;
-        localStorage.setItem('g_clan_id', n); localStorage.setItem('g_clan_leader', 'true');
-        db.ref('clans/'+n).set({ leader: curAva }); save(); initClan();
+    function createClan() {
+        const n = prompt("Название (3-8 букв):")?.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if(n && n.length>=3 && n.length<=8) {
+            myClan = n; localStorage.setItem('g_clan', n);
+            db.ref(`clans/${n}/members/${myLogin}`).set(elo);
+            alert("Клан: "+n); openM('clans');
+        }
     }
-    function clanJoin() {
-        const n = document.getElementById('clan-in-name').value.trim();
-        if(!n) return; myClan = n; isLeader = false;
-        localStorage.setItem('g_clan_id', n); localStorage.setItem('g_clan_leader', 'false');
-        save(); initClan();
-    }
-    function initClan() {
-        if(!myClan) return;
-        document.getElementById('clan-setup').style.display='none';
-        document.getElementById('clan-active').style.display='block';
-        document.getElementById('clan-title').innerText = "КЛАН: " + myClan;
-        if(isLeader) document.getElementById('clan-admin-clear').style.display='block';
-        db.ref('clan_chats/'+myClan).on('value', s => {
-            const ch = document.getElementById('clan-chat'); ch.innerHTML = '';
-            s.forEach(x => {
-                const m = x.val();
-                const d = isLeader ? `<span style="color:red" onclick="clanDel('${x.key}')"> [X]</span>` : '';
-                ch.innerHTML += `<div><b>${m.a}:</b> ${m.t}${d}</div>`;
+
+    function renderClans() {
+        const box = document.getElementById('clan-list'); box.innerHTML = '';
+        db.ref('clans').once('value', s => {
+            let list = []; s.forEach(snap => {
+                let sum = 0; if(snap.val().members) Object.values(snap.val().members).forEach(e => sum += e);
+                list.push({n: snap.key, e: sum});
             });
-            ch.scrollTop = 999;
+            list.sort((a,b)=>b.e-a.e);
+            list.forEach((c, i) => {
+                const del = isAdmin ? `<span onclick="if(confirm('Удалить?')){db.ref('clans/${c.n}').remove();renderClans();}" style="color:red;cursor:pointer"> [X]</span>` : '';
+                box.innerHTML += `<div class="clan-row"><span>${i+1}. ${c.n}${del}</span><span>${c.e} 🏆</span></div>`;
+            });
         });
     }
-    function clanSend() {
-        const i = document.getElementById('clan-msg-in');
-        if(!i.value || !myClan) return;
-        db.ref('clan_chats/'+myClan).push({ a: curAva, t: filter(i.value) });
-        i.value = '';
-    }
-    function clanDel(k) { if(isLeader) db.ref('clan_chats/'+myClan+'/'+k).remove(); }
-    function clanClearAll() { if(isLeader && confirm("Очистить?")) db.ref('clan_chats/'+myClan).remove(); }
 
-    // Промо и Магазин
+    function renderTop() {
+        db.ref('leaderboard').orderByChild('elo').limitToLast(5).once('value', s => {
+            const box = document.getElementById('top-list'); box.innerHTML = '';
+            let list = []; s.forEach(c => list.push(c.val())); list.reverse();
+            list.forEach((p, i) => {
+                box.innerHTML += `<div class="clan-row"><span>${i+1}. ${p.ava} <b class="${i===0?'champion-name':''}">${p.name}</b></span><span>${p.elo}</span></div>`;
+            });
+        });
+    }
+
     function usePromo() {
-        const p = document.getElementById('promo-input').value.toUpperCase();
-        if(p === 'RICH10000') { coins += 10000; alert("+10,000🪙"); }
-        else if(p === 'ULTRA3000') { elo = 3000; alert("🏆 ELO 3000"); }
-        else if(p === 'GIRI') { coins += 1000; alert("+1000🪙"); }
-        save(); openM();
-    }
-
-    function openM() {
-        const aG = document.getElementById('menu-avas'), iG = document.getElementById('menu-items');
-        aG.innerHTML = ''; iG.innerHTML = '';
-        for(let a in AVATARS) {
-            const u = unlocked.includes(a);
-            aG.innerHTML += `<div class="grid-item ${curAva===a?'active':''}" onclick="buyA('${a}')">${a}${u?'':'<br><small style="font-size:8px">'+AVATARS[a]+'</small>'}</div>`;
-        }
-        for(let id in ITEMS) {
-            const u = unlocked.includes(id);
-            iG.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; font-size:12px;"><span>${ITEMS[id].n}</span> <button class="btn" onclick="buyI('${id}')">${u?'ВЗЯТЬ':ITEMS[id].p+'🪙'}</button></div>`;
-        }
-        document.getElementById('modal').style.display='block';
-        document.getElementById('overlay').style.display='block';
-    }
-
-    function buyA(a) {
-        if(unlocked.includes(a)) curAva = a;
-        else if(coins >= AVATARS[a]) { coins -= AVATARS[a]; unlocked.push(a); curAva = a; }
-        save(); openM();
-    }
-    function buyI(id) {
-        if(unlocked.includes(id)) { if(ITEMS[id].type==='s') curSkin=id; else curTheme=id; }
-        else if(coins >= ITEMS[id].p) { coins -= ITEMS[id].p; unlocked.push(id); }
-        save(); openM();
+        const p = document.getElementById('p-in').value.toUpperCase();
+        if(p === 'ADMIN777') { isAdmin = true; localStorage.setItem('g_admin', 'true'); alert("АДМИН АКТИВИРОВАН"); openM('profile'); }
+        else if(p === 'GIFT') { coins+=100; alert("+100🪙"); save(); }
+        else alert("Неверный код");
     }
 
     function save() {
-        localStorage.setItem('g_c', coins); localStorage.setItem('g_u', JSON.stringify(unlocked));
-        localStorage.setItem('g_a', curAva); localStorage.setItem('g_t', curTheme); 
-        localStorage.setItem('g_s', curSkin); localStorage.setItem('g_elo', elo);
-        document.getElementById('disp-coins').innerText = coins; 
-        document.getElementById('disp-ava').innerText = curAva;
-        document.getElementById('disp-elo').innerText = "🏆 " + elo;
-        render();
+        localStorage.setItem('g_c', coins); localStorage.setItem('g_elo', elo); localStorage.setItem('g_gp', gamesPlayed);
+        document.getElementById('disp-coins').innerText = coins; document.getElementById('disp-elo').innerText = "🏆 "+elo;
+        db.ref('leaderboard/'+myLogin).set({ name: myLogin, elo: elo, ava: curAva });
+        if(myClan) db.ref(`clans/${myClan}/members/${myLogin}`).set(elo);
     }
 
     function sendMsg() {
-        const i = document.getElementById('msg-input');
-        if(!i.value || !roomId) return;
-        db.ref('chats/'+roomId).push({ a: curAva, t: filter(i.value) });
-        i.value = '';
+        const i = document.getElementById('msg-input'); if(!i.value || !roomId) return;
+        db.ref('chats/'+roomId).push({ a: curAva, t: filter(i.value), uid: myLogin, adm: isAdmin }); i.value = '';
     }
 
+    function delMsg(k) { db.ref('chats/'+roomId+'/'+k).remove(); }
     function closeM() { document.getElementById('modal').style.display='none'; document.getElementById('overlay').style.display='none'; }
     function resign() { if(confirm("Сдаться?")) db.ref('games/'+roomId).update({ f: 'win_' + (myColor==='w'?'b':'w') }); }
-    function endGame(win) { if(gameEnded) return; gameEnded = true; if(win) { coins+=50; elo+=25; alert("WIN! +50🪙"); } else { elo-=25; alert("LOSE!"); } save(); setTimeout(()=>location.reload(), 2000); }
-
+    function endGame(win) {
+        if(gameEnded) return; gameEnded = true; gamesPlayed++;
+        if(win) { coins+=10; elo+=25; alert("ПОБЕДА! +10🪙"); } else { elo-=25; alert("ПРОИГРЫШ"); }
+        save(); setTimeout(() => location.reload(), 2500);
+    }
     save();
-    if(myClan) initClan();
 </script>
 </body>
 </html>
